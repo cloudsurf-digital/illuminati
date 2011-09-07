@@ -85,6 +85,12 @@ SphinxMetric
 
 Tests the health of a sphinx instance by running 'SHOW STATUS' on the searchd instance.
 
+SystemMetric
+------------
+
+Meant to be general stats about the system, but currently just makes system-wide physical
+and virtual memory consumption available.
+
 Extensibility
 =============
 
