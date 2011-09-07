@@ -76,9 +76,9 @@ Specify variable names, and then the associated units as such:
 
 	[ShellMetric]
 	num_files = ls -lah | wc -l
-	num_files-count = Count
+	num_files-units = Count
 	variable = ...
-	variable-count = Kilobytes
+	variable-units = Kilobytes
 
 SphinxMetric
 ------------
