@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import time				# For sleeping
-import urllib			# Need this to determine our instance ID
+import urllib2			# Need this to determine our instance ID
 import logging			# Log nicely
 import datetime			# For default times
 import ConfigParser		# For reading default configurations
@@ -11,13 +11,15 @@ logger = logging.getLogger('sauron')
 logger.addHandler(logging.NullHandler())
 
 class Watcher(object):
-	@staticmethod
-	def getInstanceId():
-		return urllib.urlopen('http://169.254.169.254/1.0/meta-data/instance-id').read().strip()
-	
 	def __init__(self):
 		self.conn      = CloudWatchConnection()
 		self.metrics   = []
+		# Try to find the instance ID
+		try:
+			instance = urllib2.urlopen('http://169.254.169.254/1.0/meta-data/instance-id').read().strip()
+			self.meta = {'InstanceId': instance}
+		except urllib2.URLError:
+			self.meta = None
 		self.readConfig()
 	
 	def readConfig(self):
@@ -76,7 +78,7 @@ class Watcher(object):
 					for key in results['results']:
 						logging.info('Pushing %s' % key)
 						v, u = results['results'][key]
-						self.conn.put_metric_data(self.namespace, m.name + '-' + key, timestamp=t, unit=u, value=v)
+						self.conn.put_metric_data(self.namespace, m.name + '-' + key, timestamp=t, unit=u, value=v, dimensions=self.meta)
 				except KeyError as e:
 					logging.error('Key Error : %s' % repr(e))
 			# Sleep until we should next run it
