@@ -66,6 +66,50 @@ Pings a url, with a configurable url, optional data string (should be url-encode
 optional timeout. Returns the latency, with the assumption being that high failure leads
 to INSUFFICIENT\_DATA in CloudWatch
 
+ProcMetric **[New]**
+------------------
+
+Some of the functionality provided in this metric is limited by the underlying OS, but it
+uses [psutil](http://code.google.com/p/psutil/) to try to get away from OS differences.
+Still, psutil is a work in progress, and doesn't have support for everything yet.
+
+ProcMetric actually lets you search for particular processes and get aggregate stats on all
+the processes that match. Typically, you'll want to limit it to a particular process (or
+perhaps the same processes repeated several times). Each filter is considered a regular
+expression, that matches if it is found anywhere in the corresponding process property:
+
+* __name__ - __Required__ The name of the process. For scripts, this is the name of the __interpreter__
+* __user__ - The username of the user running that process
+* __args__ - Args provided to the process when invoked. For scripts, includes the script name
+* __cwd__  - The current working directory of the running process
+
+This metric __always__ returns a count of the number of processes that match your description,
+and if processes match, it aggregates the following statistics (summing them up across all procs):
+
+* __user-cpu__ - Time spent in user (s)
+* __sys-spu__  - Time spend in sys (s)
+* __uptime__   - How long the process has been running (s)
+* __real-mem__ - Real memory consumption (MB)
+* __virt-mem__ - Virtual memory consumption (MB)
+* __percent-mem__ - Portion of total memory consumption (percent)
+* __children__ - Number of child processes (count)
+* __threads__  - Number of threads (count)
+* __files__    - Number of files it has open (count)
+* __connections__ - Number of TCP/UDP connections (count)
+
+You can specify the specific attributes you would like pushed to CloudWatch, in case you
+don't want all of these cluttering your monitoring (and costing you money). To do so, just
+specify the 'keys' argument in the configuration file, as a comma-separated list. By way of
+some examples, you might want to make sure that you always have a process 'myService' being
+run as user 'me', in the directory '/var/me'. And in this case, you're really just interested
+in how much memory it's using, as well as how many threads it has going at any one time:
+
+	[ProcMetric]
+	name = myService
+	user = me
+	cwd  = /var/me
+	keys = threads,percent-mem,real-mem
+
 ShellMetric
 -----------
 
