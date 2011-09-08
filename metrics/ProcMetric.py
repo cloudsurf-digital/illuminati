@@ -15,7 +15,7 @@ class ProcMetric(Metric):
 			self.keys = kwargs['keys'].strip().split(',')
 		except (ValueError, KeyError):
 			self.keys = ['user-cpu','sys-cpu','real-mem','virt-mem','files','children','connections','percent-mem','threads']
-		self.atts = {
+		self.attrs = {
 			'user-cpu'    : (ProcMetric.userCPU, 'Seconds'),
 			'sys-cpu'     : (ProcMetric.sysCPU , 'Seconds'),
 			'real-mem'    : (ProcMetric.realMem, 'Megabytes'),
@@ -23,17 +23,18 @@ class ProcMetric(Metric):
 			'files'       : (ProcMetric.numFiles, 'Count'),
 			'children'    : (ProcMetric.numChildren, 'Count'),
 			'connections' : (ProcMetric.numConnections, 'Count'),
+			'uptime'      : (ProcMetric.uptime, 'Seconds'),
 			'percent-mem' : (psutil.Process.get_memory_percent, 'Percent'),
 			'threads'     : (psutil.Process.get_num_threads, 'Count')
 		}
 
 	@staticmethod
 	def userCPU(p):
-		return p.get_cpu_time()[0]
+		return p.get_cpu_times()[0]
 	
 	@staticmethod
 	def sysCPU(p):
-		return p.get_cpu_time()[1]
+		return p.get_cpu_times()[1]
 	
 	@staticmethod
 	def realMem(p):
@@ -55,21 +56,28 @@ class ProcMetric(Metric):
 	def numConnections(p):
 		return len(p.get_connections())
 	
+	@staticmethod
+	def uptime(p):
+		return (time.time() - p.create_time)
+	
 	def match(self, p):
-		for key,value in self.kwargs.items():
-			if key == 'name':
-				if not re.search(value, p.name):
-					return False
-			if key == 'user':
-				if not re.search(value, p.username):
-					return False
-			if key == 'args':
-				if not re.search(' '.join.p.args):
-					return False
-			if key == 'cwd':
-				if not re.search(p.getcwd()):
-					return False
-		return True
+		try:
+			for key,value in self.kwargs.items():
+				if key == 'name':
+					if not re.search(value, p.name):
+						return False
+				if key == 'user':
+					if not re.search(value, p.username):
+						return False
+				if key == 'args':
+					if not re.search(value, ' '.join(p.cmdline)):
+						return False
+				if key == 'cwd':
+					if not re.search(value, p.getcwd()):
+						return False
+			return True
+		except psutil.error.AccessDenied:
+			return False
 	
 	def values(self):
 		try:
@@ -84,8 +92,8 @@ class ProcMetric(Metric):
 						try:
 							results[key][0] += r
 						except Exception:
-							results[key] = (r, attr[1])
+							results[key] = [r, attr[1]]
 			results['count'] = (count, 'Count')
-			return {'results': results}
+			return {'results': dict((k, tuple(v)) for k,v in results.items())}
 		except KeyError:
 			return {'error': 'Could not find all keys in searchd status'}
