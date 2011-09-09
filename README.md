@@ -21,28 +21,25 @@ Configuration
 Store your configuration file in either ./sauron.conf or /etc/sauron.conf, in conf-
 style format. Each section can be the name of a metric, and then the paramters
 specific to that metric. All metrics at least include a name, which must be provided
-in the configuration file. There also __must__ be a section called "sauron," which
-specifies the interval (in seconds) that should be used in between running the metrics.
-Optionally, you can provide a "namespace" parameter, which is what the custom metrics
-are reported under. If you don't provide it, it uses the instance-id of the the machine
-running it. For example:
+in the configuration file, next to the metric name as in "metric:name". There also 
+__must__ be a section called "sauron," which specifies the interval (in seconds) that 
+should be used in between running the metrics. Optionally, you can provide a "namespace"
+parameter, which is what the custom metrics are reported under. If you don't provide it,
+it uses the hostname of the system running it. For example:
 
 	[sauron]
 	interval = 60
 
-	[DiskMetric]
-	name = root
+	[DiskMetric:root]
 	path = /
 	keys = percent,inodes
 
-	[MySQLMetric]
-	name = mysql
+	[MySQLMetric:mysql]
 	host = localhost
 	user = dan
 	passwd = somepassword
 
-	[SphinxMetric]
-	name = sphinx
+	[SphinxMetric:sphinx]
 
 Metrics
 =======
@@ -104,8 +101,7 @@ some examples, you might want to make sure that you always have a process 'mySer
 run as user 'me', in the directory '/var/me'. And in this case, you're really just interested
 in how much memory it's using, as well as how many threads it has going at any one time:
 
-	[ProcMetric]
-	name = myService
+	[ProcMetric:myService]
 	user = me
 	cwd  = /var/me
 	keys = threads,percent-mem,real-mem
@@ -116,13 +112,11 @@ ShellMetric
 Executes a shell command that returns a number. __This is potentially dangerous, as it
 allows for injection attacks, so use at your own risk.__ To alleviate this risk, you can
 either run reporter.py under its own user, or just remove metrics/ShellMetric.py.
-Specify variable names, and then the associated units as such:
+Specify the command to run, and the units:
 
-	[ShellMetric]
-	num_files = ls -lah | wc -l
-	num_files-units = Count
-	variable = ...
-	variable-units = Kilobytes
+	[ShellMetric:files]
+	cmd = ls -lah | wc -l
+	units = Count
 
 SphinxMetric
 ------------
