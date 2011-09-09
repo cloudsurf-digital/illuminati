@@ -51,6 +51,21 @@ Disk
 
 Can check up on disk free space, number of inodes in use, etc.
 
+LogMetric _[New]_
+-----------------
+
+"Tails" a log file that you specify to count the number of lines that match the provided
+regular expressions. It remembers where it last read in the file (except between restarts),
+and continues reading from there. It knows when the file has been replaced (or more exactly,
+when the inode for the provided path changes). It only actually reads from the file when
+the modification time for the file changes (st\_mtime). For example, if you want to track
+the number of successes and failures listed in a log file:
+
+	[LogMetric:myServiceLog]
+	path = /var/log/myService.log
+	success = ^Success
+	failure = failed$
+
 MySQL
 -----
 
@@ -63,7 +78,7 @@ Pings a url, with a configurable url, optional data string (should be url-encode
 optional timeout. Returns the latency, with the assumption being that high failure leads
 to INSUFFICIENT\_DATA in CloudWatch
 
-ProcMetric **[New]**
+ProcMetric _[New]_
 ------------------
 
 Some of the functionality provided in this metric is limited by the underlying OS, but it
