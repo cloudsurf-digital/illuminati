@@ -78,6 +78,20 @@ Pings a url, with a configurable url, optional data string (should be url-encode
 optional timeout. Returns the latency, with the assumption being that high failure leads
 to INSUFFICIENT\_DATA in CloudWatch
 
+PipeMetric _[New]_
+------------------
+
+Similar to "LogMetric," this "tails" a named pipe and matches each line against a set of
+provided regular expressions. The advantage of the PipeMetric is that if you don't intend
+to keep your files long-term, you can get performance boosts that come with using a named
+pipe instead of a file. If there isn't a fifo already created in the specified path, it will
+create one for you:
+
+	[PipeMetric:myServiceLog]
+	path = /var/log/namedPipeMyService.log
+	success = ^Success
+	failure = failed$
+
 ProcMetric _[New]_
 ------------------
 
