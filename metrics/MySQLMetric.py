@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 
 import os
+import Metric
 import MySQLdb
 import datetime
-from metric import Metric
 
-class MySQLMetric(Metric):
+class MySQLMetric(Metric.Metric):
 	def __init__(self, name, host=None, user=None, passwd=None):
 		super(MySQLMetric,self).__init__(name)
 		self.host   = host
@@ -13,9 +13,9 @@ class MySQLMetric(Metric):
 		self.passwd = passwd
 	
 	def values(self):
-		conn = MySQLdb.connect(host=self.host, user=self.user, passwd=self.passwd)
-		cursor = conn.cursor()
 		try:
+			conn = MySQLdb.connect(host=self.host, user=self.user, passwd=self.passwd)
+			cursor = conn.cursor()
 			cursor.execute('show status')
 			r = dict(cursor.fetchall())
 			return {
@@ -25,7 +25,7 @@ class MySQLMetric(Metric):
 				}
 			}
 		except MySQLdb.OperationalError:
-			return {'error': 'Failed to connect to mySQL'}
+			raise Metric.MetricException('Failed to connect to mySQL.')
 		except KeyError:
-			return {'error': 'Could not find all keys in mySQL status'}
+			raise Metric.MetricException('Could not find all keys in mySQL status')
 	

@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 
 import os
+import Metric
 import urllib2
 import datetime
-from metric import Metric
 
-class PingMetric(Metric):
+class PingMetric(Metric.Metric):
 	def __init__(self, name, url, post=None, timeout=30):
 		super(PingMetric,self).__init__(name)
 		self.url  = url
@@ -19,7 +19,7 @@ class PingMetric(Metric):
 		except urllib2.HTTPError:
 			pass
 		except IOError:
-			return {'error': 'Failed to fetch %s' % self.url}
+			raise Metric.MetricException('Failed to fetch %s' % self.url)
 		latency = (datetime.datetime.now() - start).total_seconds()
 		return {
 			'results': {

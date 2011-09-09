@@ -3,10 +3,10 @@
 import re
 import os
 import psutil
+import Metric
 import datetime
-from metric import Metric
 
-class ProcMetric(Metric):
+class ProcMetric(Metric.Metric):
 	def __init__(self, name, **kwargs):
 		super(ProcMetric,self).__init__(name)
 		self.kwargs = kwargs
@@ -95,5 +95,7 @@ class ProcMetric(Metric):
 							results[key] = [r, attr[1]]
 			results['count'] = (count, 'Count')
 			return {'results': dict((k, tuple(v)) for k,v in results.items())}
-		except KeyError:
-			return {'error': 'Could not find all keys in searchd status'}
+		except psutil.error.AccessDenied:
+			raise Metric.MetricException('Access denied for matched process.')
+		except OSError as e:
+			raise Metric.MetricException(e)

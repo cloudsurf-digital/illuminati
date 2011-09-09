@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 
 import os
+import Metric
 import datetime
-from metric import Metric
 
-class DiskMetric(Metric):
+class DiskMetric(Metric.Metric):
 	def __init__(self, name, path, keys):
 		super(DiskMetric,self).__init__(name)
 		self.path = path

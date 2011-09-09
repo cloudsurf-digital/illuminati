@@ -1,39 +1,23 @@
 #! /usr/bin/env python
 
 import re
+import Metric
 import subprocess
-from metric import Metric
 
-class ShellMetric(Metric):
-	def __init__(self, name, **kwargs):
+class ShellMetric(Metric.Metric):
+	def __init__(self, name, cmd, units):
 		super(ShellMetric,self).__init__(name)
-		self.metrics = {}
-		self.units = {}
-		# Go head and set up all the metrics
-		for met, cmd in kwargs.items():
-			if re.search(r'-units$', met):
-				unit = met.replace('-units', '')
-				print 'Found units for %s' % unit
-				self.units[unit] = cmd
-			else:
-				self.metrics[met] = cmd
-		# Now make sure each metric has a unit
-		for met in self.metrics:
-			if met not in self.units:
-				print 'No units provided for %s!' % met
-				exit(1)
+		self.cmd   = cmd
+		self.units = units
 	
 	def values(self):
-		results = {}
-		for met, cmd in self.metrics.items():
-			try:
-				res = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
-				results[met] = (res, self.units[met])
-			except ValueError:
-				return { 'error' : 'Invalid call to Popen for %s' % cmd}
-			except OSError as e:
-				return { 'error' : repr(e) }
-		return { 'results' : results }
+		try:
+			res = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+			return {'results' : { self.name : (res, self.units) } }
+		except ValueError:
+			raise Metric.MetricException('Invalid call to Popen for %s' % cmd)
+		except OSError as e:
+			raise Metric.MetricException(e)
 
 if __name__ == '__main__':
 	m = ShellMetric('testing', **{'count':'ls -l | wc -l', 'count-units':'Count'})

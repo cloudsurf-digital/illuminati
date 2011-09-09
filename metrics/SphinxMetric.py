@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 
 import os
+import Metric
 import MySQLdb
 import datetime
-from metric import Metric
 
-class SphinxMetric(Metric):
+class SphinxMetric(Metric.Metric):
 	def __init__(self, name, host='127.0.0.1', port=9306):
 		super(SphinxMetric,self).__init__(name)
 		self.host   = host
@@ -27,6 +27,6 @@ class SphinxMetric(Metric):
 				}
 			}
 		except MySQLdb.OperationalError:
-			return {'error': 'Error connecting to sphinx searchd'}
+			raise Metric.MetricException('Error connecting to sphinx searchd')
 		except KeyError:
-			return {'error': 'Could not find all keys in searchd status'}
+			raise Metric.MetricException('Could not find all keys in searchd status')
