@@ -1,13 +1,12 @@
 Sauron
 ======
 
-Sauron is meant to act as an all-seeing eye for pushing data to CloudWatch. It
+Sauron is meant to act as an all-seeing eye for pushing data to monitoring. It
 works based on extendable "metrics", which are just python classes that report
 back values. For example, it comes with metrics to monitor disk space, mysql
-health, pinging servers, etc.
-
-This is very early days, and mechanisms will likely change slightly. In the mean
-time, this is the state of affairs.
+health, pinging servers, etc. These metrics are then pushed to "emitters" which
+describe where that data should go. Multiple emitters can be used, and are meant
+to be interchangeable.
 
 Running
 -------
@@ -18,28 +17,56 @@ as either nohup or with screen.
 Configuration
 =============
 
-Store your configuration file in either ./sauron.conf or /etc/sauron.conf, in conf-
+Store your configuration file in either ./sauron.yaml or /etc/sauron.yaml, in YAML-
 style format. Each section can be the name of a metric, and then the paramters
 specific to that metric. All metrics at least include a name, which must be provided
-in the configuration file, next to the metric name as in "metric:name". There also 
-__must__ be a section called "sauron," which specifies the interval (in seconds) that 
-should be used in between running the metrics. Optionally, you can provide a "namespace"
-parameter, which is what the custom metrics are reported under. If you don't provide it,
-it uses the hostname of the system running it. For example:
+in the configuration file, as a key in the metrics dictionary and then a module. The
+rest of the arguments are specific to the particular metric.
 
-	[sauron]
-	interval = 60
+System-wide configuration is just the interval and the path to the log file. Emitters
+represent the destinations to which you want to push. Currently, only CloudWatch is
+supported, but I hope to implement more soon.
 
-	[DiskMetric:root]
-	path = /
-	keys = percent,inodes
+	interval:   60
+	logfile:    sauron.log
 
-	[MySQLMetric:mysql]
-	host = localhost
-	user = dan
-	passwd = somepassword
+	# Emitters are where you want to publish the data
+	emitters:
+	    # For example, we support CloudWatch
+	    CloudWatch:
+	        namespace: sauron
 
-	[SphinxMetric:sphinx]
+	# Metrics are what you want to collect
+	metrics:
+	    # This logs the percent usage and the number of
+	    # free inodes on the volume mounted at /
+	    root:
+	        module: DiskMetric
+	        path: /
+	        keys: 
+	            - percent
+	            - inodes
+
+	    # This looks at the apache access log, and counts
+	    # the number of lines that match [POST], [GET]
+	    apache:
+	        module: LogMetric
+	        path: /var/log/apache2/access.log
+	        post: \[POST\]
+	        get: \[GET\]
+
+Emitters
+========
+
+Currently, we only support CloudWatch, but we'd like that to change.
+
+CloudWatch
+----------
+
+To use CloudWatch, you must have ~/.boto set up with your AWS Identity and Secret keys.
+You must also then specify a namespace for your metrics, and optionally additional dimensions.
+If you are running sauron on an EC2 instance, it will automatically include the instance-id
+in the dimensions.
 
 Metrics
 =======
@@ -55,16 +82,18 @@ LogMetric _[New]_
 -----------------
 
 "Tails" a log file that you specify to count the number of lines that match the provided
-regular expressions. It remembers where it last read in the file (except between restarts),
-and continues reading from there. It knows when the file has been replaced (or more exactly,
-when the inode for the provided path changes). It only actually reads from the file when
-the modification time for the file changes (st\_mtime). For example, if you want to track
-the number of successes and failures listed in a log file:
+regular expressions. Alternatively, you can use the _last_ group of the regular expression
+as a number, which is what will be returned. It remembers where it last read in the file
+(except between restarts), and continues reading from there. It knows when the file has
+been replaced (or more exactly, when the inode for the provided path changes). It only
+actually reads from the file when the modification time for the file changes (st\_mtime).
+For example, if you want to track the number of successes and failures listed in a log file:
 
-	[LogMetric:myServiceLog]
-	path = /var/log/myService.log
-	success = ^Success
-	failure = failed$
+	myServiceLog:
+		module: LogMetric
+		path: /var/log/myService.log
+		success: ^Successfully fetched (\d+)
+		failure: failed$
 
 MySQL
 -----
@@ -87,10 +116,11 @@ to keep your files long-term, you can get performance boosts that come with usin
 pipe instead of a file. If there isn't a fifo already created in the specified path, it will
 create one for you:
 
-	[PipeMetric:myServiceLog]
-	path = /var/log/namedPipeMyService.log
-	success = ^Success
-	failure = failed$
+	myServiceLog:
+		module: PipeMetric
+		path: /var/log/namedPipeMyService.log
+		success: ^Success
+		failure: failed$
 
 ProcMetric _[New]_
 ------------------
@@ -123,17 +153,21 @@ and if processes match, it aggregates the following statistics (summing them up 
 * __files__    - Number of files it has open (count)
 * __connections__ - Number of TCP/UDP connections (count)
 
-You can specify the specific attributes you would like pushed to CloudWatch, in case you
-don't want all of these cluttering your monitoring (and costing you money). To do so, just
-specify the 'keys' argument in the configuration file, as a comma-separated list. By way of
+You can specify the specific attributes you would like pushed, in case you
+don't want all of these cluttering your monitoring (and/or costing you money). To do so, just
+specify the 'keys' argument in the configuration file, as a list. By way of
 some examples, you might want to make sure that you always have a process 'myService' being
 run as user 'me', in the directory '/var/me'. And in this case, you're really just interested
 in how much memory it's using, as well as how many threads it has going at any one time:
 
-	[ProcMetric:myService]
-	user = me
-	cwd  = /var/me
-	keys = threads,percent-mem,real-mem
+	myService:
+		module: ProcMetric
+		user: me
+		cwd: /var/me
+		keys:
+			- threads
+			- percent-mem
+			- real-mem
 
 ShellMetric
 -----------
@@ -143,9 +177,10 @@ allows for injection attacks, so use at your own risk.__ To alleviate this risk,
 either run reporter.py under its own user, or just remove metrics/ShellMetric.py.
 Specify the command to run, and the units:
 
-	[ShellMetric:files]
-	cmd = ls -lah | wc -l
-	units = Count
+	files:
+		module: ShellMetric
+		cmd: ls -lah | wc -l
+		units: Count
 
 SphinxMetric
 ------------
@@ -175,3 +210,14 @@ If you do extend the available metrics, inherit from the metric class, and imple
 the "values," function to return a dictionary in the above style. Optionally, 
 supply another key in that dictionary which is the time for which the data is
 valid. __Your metric "MyMetric" should be stored in metrics/MyMetric.py__
+
+Roadmap
+=======
+
+* We'd like to provide a default monitoring server and interface. Maybe not something that's
+amazing, but at least something to get started.
+	- Notifications for nodes first reporting in
+	- Notifications for nodes ceasing to report in
+* Chatbot emitter to provide graphs, statuses, etc.
+* Allow alarms to be baked into the configuration file
+* Add daemonizing, startup, shutdown, etc.

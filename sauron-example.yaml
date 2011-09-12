@@ -1,0 +1,79 @@
+interval:   60
+logfile:    sauron.log
+
+# Emitters are where you want to publish the data
+emitters:
+    # For example, we support CloudWatch
+    CloudWatch:
+        namespace: sauron
+        # If you'd like, specify additional dimensions for grouping
+        dimensions:
+            project: sauron
+            name: dan
+
+# Metrics are what you want to collect
+metrics:
+    # Every metric has a name, which is the
+    # YAML key. Then, they must also specify the
+    # module that collects that data, and then
+    # any arguments that metric supports:
+    #
+    # name:
+    #   module: moduleName
+    #   modArg1: value1
+    #   modArg2: value2
+    #   ...
+    
+    # This logs the percent usage and the number of
+    # free inodes on the volume mounted at /
+    root:
+        module: DiskMetric
+        path: /
+        keys: 
+            - percent
+            - inodes
+    
+    # This looks at the apache access log, and counts
+    # the number of lines that match [POST], [GET]
+    apache:
+        module: LogMetric
+        path: /var/log/apache2/access.log
+        post: \[POST\]
+        get: \[GET\]
+    
+    # This checks the health of the mysql instance
+    mysql:
+        module: MySQLMetric
+        host: localhost
+        user: user
+        passwd: somepassword
+    
+    # This just reports the latency to the provided url
+    google:
+        module: PingMetric
+        url: http://google.com
+    
+    # Monitors a process named python, instantiated by
+    # 'dlecocq', in a provided path, run with args that
+    # match the listed regex
+    python:
+        module: ProcMetric
+        args: sauron
+        cwd: /some/sort
+        user: dlecocq
+    
+    # Monitors sphinx health
+    sphinx:
+        module: SphinxMetric
+
+    # Runs a command to get a metric
+    users:
+        module: ShellMetric
+        cmd: who | wc -l
+        units: Count
+    
+    # General details on the system
+    localhost:
+        module: SystemMetric
+    
+    
