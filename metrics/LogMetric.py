@@ -12,13 +12,18 @@ class LogMetric(Metric.Metric):
 		super(LogMetric,self).__init__(name)
 		self.patterns = dict([(k, re.compile(v)) for k,v in kwargs.items()])
 		self.path = path
-		self.f    = file(self.path)		# The file object we'll read from
+		try:
+			self.f    = file(self.path)		# The file object we'll read from
+		except IOError as e:
+			raise Metric.MetricException(e)
 		self.stat = os.lstat(self.path)	# The stats on that particular file
 	
 	def __del__(self):
 		try:
 			self.f.close()
 		except ValueError:
+			pass
+		except AttributeError:
 			pass
 	
 	def values(self):

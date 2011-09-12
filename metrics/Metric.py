@@ -2,11 +2,11 @@
 
 class MetricException(Exception):
 	def __init__(self, message):
-		self.message = message
+		self.msg = message
 	def __repr__(self):
-		return repr(self.message)
+		return repr(self.msg)
 	def __str__(self):
-		return str(self.message)
+		return str(self.msg)
 
 class Metric(object):
 	def __init__(self, name):
