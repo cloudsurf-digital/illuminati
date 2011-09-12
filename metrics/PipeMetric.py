@@ -25,6 +25,8 @@ class PipeMetric(Metric.Metric):
 			os.close(self.f)
 		except ValueError:
 			pass
+		except AttributeError:
+			pass
 	
 	def values(self):
 		# Alright, first get new stats on the file
@@ -64,8 +66,17 @@ class PipeMetric(Metric.Metric):
 		counts = dict([(k, 0) for k in self.patterns])
 		for line in lines:
 			for k, r in self.patterns.items():
-				if r.search(line):
-					counts[k] += 1
+				m = r.search(line)
+				if m:
+					try:
+						# Use the last matching group if found
+						counts[k] += int(m.groups()[-1])
+					except ValueError:
+						logger.warn('Could not parse int from %s. Using 1' % m.gorups()[-1])
+						counts[k] += 1
+					except IndexError:
+						logger.info('No groups in regular expression. Using 1')
+						counts[k] += 1
 		return {
 			'results' : dict([(k, (v, 'Count')) for k, v in counts.items()])
 		}

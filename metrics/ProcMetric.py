@@ -11,8 +11,16 @@ class ProcMetric(Metric.Metric):
 		super(ProcMetric,self).__init__(name)
 		self.kwargs = kwargs
 		self.kwargs['name'] = name
+		re.compile(name)
+		for k in ['name', 'user', 'args', 'cwd']:
+			try:
+				self.kwargs[k] = re.compile(self.kwargs[k])
+			except KeyError:
+				pass
+			except re.error:
+				raise Metric.MetricException('Invalid regular expression: %s' % self.kwargs[k])		
 		try:
-			self.keys = kwargs['keys'].strip().split(',')
+			self.keys = kwargs['keys']
 		except (ValueError, KeyError):
 			self.keys = ['user-cpu','sys-cpu','real-mem','virt-mem','files','children','connections','percent-mem','threads', 'uptime']
 		self.attrs = {
@@ -64,16 +72,16 @@ class ProcMetric(Metric.Metric):
 		try:
 			for key,value in self.kwargs.items():
 				if key == 'name':
-					if not re.search(value, p.name):
+					if not value.search(p.name):
 						return False
 				if key == 'user':
-					if not re.search(value, p.username):
+					if not value.search(p.username):
 						return False
 				if key == 'args':
-					if not re.search(value, ' '.join(p.cmdline)):
+					if not value.search(' '.join(p.cmdline)):
 						return False
 				if key == 'cwd':
-					if not re.search(value, p.getcwd()):
+					if not value.search(p.getcwd()):
 						return False
 			return True
 		except psutil.error.AccessDenied:

@@ -20,7 +20,10 @@ class PingMetric(Metric.Metric):
 			pass
 		except IOError:
 			raise Metric.MetricException('Failed to fetch %s' % self.url)
-		latency = (datetime.datetime.now() - start).total_seconds()
+		try:
+			latency = (datetime.datetime.now() - start).total_seconds()
+		except AttributeError:
+			latency = (datetime.datetime.now() - start).seconds
 		return {
 			'results': {
 				'latency': (latency, 'Seconds')
