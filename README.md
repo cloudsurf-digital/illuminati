@@ -254,6 +254,7 @@ amazing, but at least something to get started.
 	- Notifications for nodes ceasing to report in
 * Chatbot emitter to provide graphs, statuses, etc.
 * Add daemonizing, startup, shutdown, etc.
+* Unit testing
 
 Design Questions
 ================
