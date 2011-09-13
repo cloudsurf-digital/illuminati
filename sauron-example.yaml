@@ -10,15 +10,18 @@ emitters:
         dimensions:
             project: sauron
             name: dan
+            role: crawler
         # Bake in actions, too
         actions:
             emailAdmin:
-                subscriptions:
-                    - endpoint: dan@seomoz.org
-                      protocol: email
+                # Actions default to the email protocol
+                - {endpoint: dan@seomoz.org, protocol: email}
+                # - {endpoint: tech@seomoz.org}
         # It's also nice to bake in your alarms
         alarms:
             serverDied:
+                # These are generic CloudWatch MetricAlarm options:
+                # http://docs.amazonwebservices.com/AmazonCloudWatch/latest/APIReference/API_MetricAlarm.html
                 description: The server process died!
                 metric: apache-count
                 statistic: Average
@@ -26,12 +29,18 @@ emitters:
                 threshold: 0
                 comparison: <=
                 evaluation_periods: 1
-                alarm_actions:
+                # Here, list the actions to take when this alarm is in state:
+                # - alarm
+                # - insufficient data
+                # - ok
+                alarm:
                     - emailAdmin
-                # Need to add insufficient data
-                dimensions:
-                    InstanceId: '\%(instanceid)s'
-
+                insufficient_data:
+                    - emailAdmin
+                # ok:
+                #   - emailAdmin
+                # dimensions:
+                #   role: crawler
 
 # Metrics are what you want to collect
 metrics:

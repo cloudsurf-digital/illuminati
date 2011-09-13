@@ -7,6 +7,7 @@ import datetime
 from boto.sns import SNSConnection
 from boto.ec2.cloudwatch import CloudWatchConnection
 from boto.ec2.cloudwatch.alarm import MetricAlarm
+from boto.ec2.cloudwatch.listelement import ListElement
 
 logger = logging.getLogger('sauron')
 
@@ -20,50 +21,76 @@ class CloudWatch(Emitter.Emitter):
 		self.setInstanceId()
 		# Make sure our actions exist...
 		self.actions = {}
-		snsConn = SNSConnection()
-		for action,atts in actions.items():
-			logger.info('Creating topic %s' % action)
+		self.updateActions(actions)
+		# Now update our alarms
+		self.updateAlarms(alarms)
+
+	def updateActions(self, actions):
+		'''Update the actions on this account based on the supplied actions. Actions
+		should a dictionary of Amazon Simple Notification Service topic names, and
+		their associated subscriptions.'''
+		# First, we need a SNS Connection to make this changes
+		conn = SNSConnection()
+		# Now make sure each subscription is registered to the topic
+		for name, subscriptions in actions.items():
+			logger.info('Creating topic %s' % name)
 			# Try to make a topic
-			response = snsConn.create_topic(action)
 			try:
-				arn = response['CreateTopicResponse']['CreateTopicResult']['TopicArn']
-				self.actions[action] = arn
+				arn = conn.create_topic(name)['CreateTopicResponse']['CreateTopicResult']['TopicArn']
+				self.actions[name] = arn
 			except KeyError:
 				raise Emitter.EmitterException('Bad response creating topic %s' % action)
-			# Now try to arrange for subscriptions
-			try:
-				logger.info('Getting a list of current subscriptions...')
-				# First, get all the subscriptions currently held
-				current = snsConn.get_all_subscriptions_by_topic(arn)
-				current = current['ListSubscriptionsByTopicResponse']
-				current = current['ListSubscriptionsByTopicResult']
-				current = current['Subscriptions']
-				current = [s['Endpoint'] for s in current]
-				# For all desired subscriptions not present, subscribe
-				for s in atts['subscriptions']:
-					if s['endpoint'] not in current:
-						logger.info('Adding %s to action %s' % (s['endpoint'], action))
-						snsConn.subscribe(arn, s['protocol'], s['endpoint'])
-					else:
-						logger.info('%s already subscribed to action' % s['endpoint'])
-			except KeyError:
+			
+			if len(subscriptions) == 0:
 				raise Emitter.EmitterException('No subscriptions for action %s' % action)
+			# Now try to arrange for subscriptions
+			# Oddly enough, calling create_topic doesn't have any effect
+			# if the topic already exists, but calling subscribe() for an
+			# existing subscription causes a second subscription to be added
+			# So, we have to get a list of current subscriptions, and then
+			# make sure to only add the subscription if it's currently there
+			logger.info('Getting a list of current subscriptions...')
+			current = conn.get_all_subscriptions_by_topic(arn)
+			current = current['ListSubscriptionsByTopicResponse']
+			current = current['ListSubscriptionsByTopicResult']
+			current = current['Subscriptions']
+			current = set[s['Endpoint'] for s in current]
+			# For all desired subscriptions not present, subscribe
+			for s in subscriptions:
+				if s['endpoint'] not in current:
+					logger.info('Adding %s to action %s' % (s['endpoint'], action))
+					snsConn.subscribe(arn, s.get('protocol', 'email'), s['endpoint'])
+				else:
+					logger.info('%s already subscribed to action' % s['endpoint'])
+			# Check for subscriptions that are active, but not listed...
+			activeUnlisted = set(current) - set([s['endpoint'] for s in subscriptions])
+			for s in activeUnlisted:
+				logger.warn('Subscript "%s" active, but not listed in config' % s)
+	
+	def updateAlarms(self, alarms):
 		# Set up our alarms...
-		for alarm,atts in alarms.items():
-			alarm_actions = atts['alarm_actions']
-			del atts['alarm_actions']
+		for name, atts in alarms.items():
+			# We don't pass in the alarm_actions attributes into the constructor
+			try:
+				alarm_actions = [self.actions[a] for a in atts.pop('alarm', [])]
+				insufficient_data_actions = [self.actions[a] for a in atts.pop('insufficient_data', [])]
+				ok_actions = [self.actions[a] for a in atts.pop('ok', [])]
+			except KeyError as e:
+				raise Emitter.EmitterException('Unknown action %s' % repr(e))
+			# Set some defaults:
+			atts['statistic'] = atts.get('statistic', 'Average')
+			atts['period'] = atts.get('period', 60)
+			atts['evaluation_periods'] = atts.get('evaluation_periods', 1)
 			# For each of the dimensions...
 			try:
 				atts['dimensions']['InstanceId'] = self.dims['InstanceId']
 				atts['namespace'] = self.namespace
 			except KeyError:
 				pass
-			a = MetricAlarm(name=alarm, **atts)
-			try:
-				for action in alarm_actions:
-					a.add_alarm_action(self.actions[action])
-			except KeyError:
-				raise Emitter.EmitterException('Unknown action %s' % action)
+			a = MetricAlarm(name=name, **atts)
+			alarm.alarm_actions = alarm_actions
+			alarm.insufficient_data_actions = ListElement(insufficient_data_actions)
+			alarm.ok_actions = ListElement(ok_actions)
 			self.conn.update_alarm(a)
 	
 	# Try to find the instance ID
