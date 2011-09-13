@@ -32,6 +32,7 @@ class CloudWatch(Emitter.Emitter):
 				raise Emitter.EmitterException('Bad response creating topic %s' % action)
 			# Now try to arrange for subscriptions
 			try:
+				logger.info('Getting a list of current subscriptions...')
 				# First, get all the subscriptions currently held
 				current = snsConn.get_all_subscriptions_by_topic(arn)
 				current = current['ListSubscriptionsByTopicResponse']
@@ -39,10 +40,12 @@ class CloudWatch(Emitter.Emitter):
 				current = current['Subscriptions']
 				current = [s['Endpoint'] for s in current]
 				# For all desired subscriptions not present, subscribe
-				for s in atts['subscription']:
+				for s in atts['subscriptions']:
 					if s['endpoint'] not in current:
-						logger.debug('Adding %s to action %s' % action)
+						logger.info('Adding %s to action %s' % (s['endpoint'], action))
 						snsConn.subscribe(arn, s['protocol'], s['endpoint'])
+					else:
+						logger.info('%s already subscribed to action' % s['endpoint'])
 			except KeyError:
 				raise Emitter.EmitterException('No subscriptions for action %s' % action)
 		# Set up our alarms...
@@ -50,11 +53,18 @@ class CloudWatch(Emitter.Emitter):
 			alarm_actions = atts['alarm_actions']
 			del atts['alarm_actions']
 			# For each of the dimensions...
-			atts['dimensions']['InstanceId'] = self.dims['InstanceId']
+			try:
+				atts['dimensions']['InstanceId'] = self.dims['InstanceId']
+				atts['namespace'] = self.namespace
+			except KeyError:
+				pass
 			a = MetricAlarm(name=alarm, **atts)
-			for action in alarm_actions:
-				a.add_alarm_action(self.actions[action])
-			a.update()
+			try:
+				for action in alarm_actions:
+					a.add_alarm_action(self.actions[action])
+			except KeyError:
+				raise Emitter.EmitterException('Unknown action %s' % action)
+			self.conn.update_alarm(a)
 	
 	# Try to find the instance ID
 	def setInstanceId(self):
