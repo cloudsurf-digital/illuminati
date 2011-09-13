@@ -68,7 +68,7 @@ You must also then specify a namespace for your metrics, and optionally addition
 If you are running sauron on an EC2 instance, it will automatically include the instance-id
 in the dimensions.
 
-(__CloudWatch Alarms__)[http://aws.amazon.com/documentation/cloudwatch/] can now be baked into
+[__CloudWatch Alarms__](http://aws.amazon.com/documentation/cloudwatch/) can now be baked into
 the configuration of the CloudWatch emitter. For example, suppose you want to watch to make 
 sure that an apache process is running at all times. You could configure a ProcMetric to match
 the appropriate process configuration. Then, you'd add an __action__ to CloudWatch, and an 
