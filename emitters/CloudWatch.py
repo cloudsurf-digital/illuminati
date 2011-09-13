@@ -2,18 +2,64 @@
 
 import Emitter
 import urllib2			# Need this to determine our instance ID
+import logging
 import datetime
+from boto.sns import SNSConnection
 from boto.ec2.cloudwatch import CloudWatchConnection
+from boto.ec2.cloudwatch.alarm import MetricAlarm
+
+logger = logging.getLogger('sauron')
 
 class CloudWatch(Emitter.Emitter):
-	def __init__(self, namespace, **kwargs):
+	def __init__(self, namespace, dimensions={}, alarms={}, actions={}):
 		super(CloudWatch,self).__init__()
 		self.namespace = namespace
 		self.conn = CloudWatchConnection()
-		self.meta = kwargs.get('dimensions', {})
-		# Try to find the instance ID
+		# Set our dimensions, including instance ID
+		self.dims = dimensions
+		self.setInstanceId()
+		# Make sure our actions exist...
+		self.actions = {}
+		snsConn = SNSConnection()
+		for action,atts in actions.items():
+			logger.info('Creating topic %s' % action)
+			# Try to make a topic
+			response = snsConn.create_topic(action)
+			try:
+				arn = response['CreateTopicResponse']['CreateTopicResult']['TopicArn']
+				self.actions[action] = arn
+			except KeyError:
+				raise Emitter.EmitterException('Bad response creating topic %s' % action)
+			# Now try to arrange for subscriptions
+			try:
+				# First, get all the subscriptions currently held
+				current = snsConn.get_all_subscriptions_by_topic(arn)
+				current = current['ListSubscriptionsByTopicResponse']
+				current = current['ListSubscriptionsByTopicResult']
+				current = current['Subscriptions']
+				current = [s['Endpoint'] for s in current]
+				# For all desired subscriptions not present, subscribe
+				for s in atts['subscription']:
+					if s['endpoint'] not in current:
+						logger.debug('Adding %s to action %s' % action)
+						snsConn.subscribe(arn, s['protocol'], s['endpoint'])
+			except KeyError:
+				raise Emitter.EmitterException('No subscriptions for action %s' % action)
+		# Set up our alarms...
+		for alarm,atts in alarms.items():
+			alarm_actions = atts['alarm_actions']
+			del atts['alarm_actions']
+			# For each of the dimensions...
+			atts['dimensions']['InstanceId'] = self.dims['InstanceId']
+			a = MetricAlarm(name=alarm, **atts)
+			for action in alarm_actions:
+				a.add_alarm_action(self.actions[action])
+			a.update()
+	
+	# Try to find the instance ID
+	def setInstanceId(self):
 		try:
-			self.meta['InstanceId'] = urllib2.urlopen('http://169.254.169.254/1.0/meta-data/instance-id', timeout=1.0).read().strip()
+			self.dims['InstanceId'] = urllib2.urlopen('http://169.254.169.254/1.0/meta-data/instance-id', timeout=1.0).read().strip()
 		except urllib2.URLError:
 			self.logger.warn('Failed to get an instance ID for this node from Amazon')
 	
@@ -23,5 +69,5 @@ class CloudWatch(Emitter.Emitter):
 			for key,value in results['results'].items():
 				self.logger.info('Pushing %s-%s => %s' % (name, key, repr(value)))
 				v, u = value
-				self.conn.put_metric_data(self.namespace, name + '-' + key, timestamp=t, unit=u, value=v, dimensions=self.meta)
+				self.conn.put_metric_data(self.namespace, name + '-' + key, timestamp=t, unit=u, value=v, dimensions=self.dims)
 	

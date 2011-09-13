@@ -10,6 +10,28 @@ emitters:
         dimensions:
             project: sauron
             name: dan
+        # Bake in actions, too
+        actions:
+            emailAdmin:
+                subscriptions:
+                    - endpoint: dan@seomoz.org
+                      protocol: email
+        # It's also nice to bake in your alarms
+        alarms:
+            serverDied:
+                description: The server process died!
+                metric: apache-count
+                statistic: Average
+                period: 60
+                threshold: 0
+                comparison: <=
+                evaluation_periods: 1
+                alarm_actions:
+                    - emailAdmin
+                # Need to add insufficient data
+                dimensions:
+                    InstanceId: '\%(instanceid)s'
+
 
 # Metrics are what you want to collect
 metrics:

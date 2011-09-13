@@ -6,6 +6,7 @@ import socket			# For getting the hostname, oddly enough
 import logging			# Log nicely
 import datetime			# For default times
 from metrics import Metric
+from emitters import Emitter
 
 # Logging stuff
 logger = logging.getLogger('sauron')
@@ -24,12 +25,7 @@ class Watcher(object):
 		self.interval  = None
 		self.logfile   = None
 		self.readConfig()
-	
-	def error(self, message):
-		print(message)
-		logger.error(message)
-		exit(1)
-	
+		
 	def readConfig(self):
 		data = {}
 		for fname in ['/etc/sauron.yaml', 'sauron.yaml']:
@@ -55,7 +51,8 @@ class Watcher(object):
 		# Read in /all/ the metrics!
 		try:
 			if len(data['metrics']) == 0:
-				self.error('No metrics in config file!')
+				logger.error('No metrics in config file!')
+				exit(1)
 			for key,value in data['metrics'].items():
 				try:
 					module = value['module']
@@ -67,20 +64,26 @@ class Watcher(object):
 					d['name'] = key
 					self.metrics.append(c(**d))
 				except KeyError:
-					self.error('No module listed for metric %s' % key)
+					logger.error('No module listed for metric %s' % key)
+					exit(1)
 				except ImportError:
-					self.error('Unable to import module %s' % module)
-				except TypeError:
-					self.error('Unable to initialize metric %s' % key)
+					logger.error('Unable to import module %s' % module)
+					exit(1)
+				except TypeError as e:
+					logger.error('Unable to initialize metric %s : %s' % (key, repr(e)))
+					exit(1)
 				except Metric.MetricException as e:
-					self.error('%s: %s' % (module, repr(e)))
+					logger.error('%s: %s' % (module, repr(e)))
+					exit(1)
 		except KeyError:
-			self.error('No metrics in config file!')
+			logger.error('No metrics in config file!')
+			exit(1)
 		
 		# Read in /all/ the emitters!
 		try:
 			if len(data['emitters']) == 0:
-				self.error('No metrics in config file!')
+				logger.error('No metrics in config file!')
+				exit(1)
 			for key,value in data['emitters'].items():
 				try:
 					m = __import__('emitters.%s' % key)
@@ -89,11 +92,17 @@ class Watcher(object):
 					d = dict(value.items())
 					self.emitters.append(c(**d))
 				except ImportError:
-					self.error('Unable to import module %s' % key)
-				except TypeError:
-					self.error('Unable to initialize emitter %s' % key)
+					logger.error('Unable to import module %s' % key)
+					exit(1)
+				except TypeError as e:
+					logger.error('Unable to initialize emitter %s : %s' % (key, repr(e)))
+					exit(1)
+				except Emitter.EmitterException as e:
+					logger.error('%s: %s' % (module, repr(e)))
+					exit(1)
 		except KeyError:
-			self.error('No emitters in config file!')
+			logger.error('No emitters in config file!')
+			exit(1)
 		
 	def run(self):
 		while True:
