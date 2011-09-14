@@ -14,6 +14,34 @@ Running
 Soon we'll have a little init.d script, but for the time being, just run reporter.py
 as either nohup or with screen.
 
+Dependencies
+============
+
+The only dependencies for sauron itself:
+
+* __python__
+* __pyyaml__
+
+Metric dependencies:
+
+* __psutil__ Is used for __SystemMetric__, __ProcMetric__
+* __mysql-python__ Is used for __SphinxMetric__, __MySQLMetric__
+
+Emitter dependencies:
+
+* __boto__ Version 2.0+ is used for __CloudWatch__. That's the current release at
+time of writing, but if you have boto 1.9, you'll need to upgrade.
+* __tweepy__ is used for the __Twitter__ emitter.
+
+Installing Dependencies
+-----------------------
+
+	sudo easy_install pyyaml
+	sudo easy_install psutil
+	sudo easy_install mysql-python
+	sudo easy_install boto
+	sudo easy_install tweepy
+
 Configuration
 =============
 
@@ -101,6 +129,16 @@ it closely. You can provide the actions to take when the alarm is in the INSUFFI
 doesn't necessarily seem like a useful state, but it's available in the API). You can also include
 the dimensions across which you'd like to gather data, but we imagine you'd often like to watch
 on a per-instance basis.
+
+Twitter _[New]_
+---------------
+
+We also support Twitter, mostly as a lark. It's kind of cludge-y -- you have to make a Twitter app,
+save the consumer key and consumer secret in the configuration file, and then once you've authorized
+the app, then save your account's access key and access secret for the app. Also, be aware that 
+__Twitter limits the number of posts a user can push to 1000 per day__, so if you have a lot of
+metrics to monitor, you have to sample very sparsely. One metric once a minute is already above that
+limit (1440 per day)
 
 Metrics
 =======

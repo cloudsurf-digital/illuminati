@@ -41,7 +41,15 @@ emitters:
                 #   - emailAdmin
                 # dimensions:
                 #   role: crawler
-
+    
+    # We also support Twitter
+    # This is kind of ugly, but... it's how it's done
+    Twitter:
+        consumer_key: yourAppsConsumerKey
+        consumer_secret: yourAppsSecretKey
+        access_token: yourAccountsAccessTokenForYourApp
+        access_secret: yourAccountsSecretTokenForYourApp
+    
 # Metrics are what you want to collect
 metrics:
     # Every metric has a name, which is the
