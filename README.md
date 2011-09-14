@@ -32,6 +32,7 @@ Emitter dependencies:
 * __boto__ Version 2.0+ is used for __CloudWatch__. That's the current release at
 time of writing, but if you have boto 1.9, you'll need to upgrade.
 * __tweepy__ is used for the __Twitter__ emitter.
+* __httplib2__ is used for the __HTTPEndpoint__ emitter.
 
 Installing Dependencies
 -----------------------
@@ -41,6 +42,7 @@ Installing Dependencies
 	sudo easy_install mysql-python
 	sudo easy_install boto
 	sudo easy_install tweepy
+	sudo easy_install httplib2
 
 Configuration
 =============
