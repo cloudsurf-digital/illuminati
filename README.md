@@ -295,6 +295,10 @@ amazing, but at least something to get started.
 * Chatbot emitter to provide graphs, statuses, etc.
 * Add daemonizing, startup, shutdown, etc.
 * Unit testing
+* Options: including --daemonize and --dry-run (to not report, but to just see metric conf)
+* Campfire bot
+* Chat bot
+* Graph injection for bots?
 
 Design Questions
 ================
