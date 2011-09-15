@@ -39,10 +39,10 @@ class CloudWatch(Emitter.Emitter):
 				arn = conn.create_topic(name)['CreateTopicResponse']['CreateTopicResult']['TopicArn']
 				self.actions[name] = arn
 			except KeyError:
-				raise Emitter.EmitterException('Bad response creating topic %s' % action)
+				raise Emitter.EmitterException('Bad response creating topic %s' % name)
 			
 			if len(subscriptions) == 0:
-				raise Emitter.EmitterException('No subscriptions for action %s' % action)
+				raise Emitter.EmitterException('No subscriptions for action %s' % name)
 			# Now try to arrange for subscriptions
 			# Oddly enough, calling create_topic doesn't have any effect
 			# if the topic already exists, but calling subscribe() for an
@@ -54,12 +54,12 @@ class CloudWatch(Emitter.Emitter):
 			current = current['ListSubscriptionsByTopicResponse']
 			current = current['ListSubscriptionsByTopicResult']
 			current = current['Subscriptions']
-			current = set[s['Endpoint'] for s in current]
+			current = set(s['Endpoint'] for s in current)
 			# For all desired subscriptions not present, subscribe
 			for s in subscriptions:
 				if s['endpoint'] not in current:
-					logger.info('Adding %s to action %s' % (s['endpoint'], action))
-					snsConn.subscribe(arn, s.get('protocol', 'email'), s['endpoint'])
+					logger.info('Adding %s to action %s' % (s['endpoint'], name))
+					conn.subscribe(arn, s.get('protocol', 'email'), s['endpoint'])
 				else:
 					logger.info('%s already subscribed to action' % s['endpoint'])
 			# Check for subscriptions that are active, but not listed...
@@ -88,9 +88,9 @@ class CloudWatch(Emitter.Emitter):
 			except KeyError:
 				pass
 			a = MetricAlarm(name=name, **atts)
-			alarm.alarm_actions = alarm_actions
-			alarm.insufficient_data_actions = ListElement(insufficient_data_actions)
-			alarm.ok_actions = ListElement(ok_actions)
+			a.alarm_actions = alarm_actions
+			a.insufficient_data_actions = ListElement(insufficient_data_actions)
+			a.ok_actions = ListElement(ok_actions)
 			self.conn.update_alarm(a)
 	
 	# Try to find the instance ID

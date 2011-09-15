@@ -27,9 +27,9 @@ class JSONPingMetric(Metric.Metric):
 			raise Metric.MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
 		# Some systems are stupid, and don't have total_seconds
 		try:
-			results['latency'] = (datetime.datetime.now() - start).total_seconds()
+			results['latency'] = ((datetime.datetime.now() - start).total_seconds(), 'Seconds')
 		except AttributeError:
-			results['latency'] = (datetime.datetime.now() - start).seconds
+			results['latency'] = ((datetime.datetime.now() - start).seconds, 'Seconds')
 		return {
 			'results': results
 		}
