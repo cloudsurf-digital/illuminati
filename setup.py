@@ -1,6 +1,7 @@
 # sauron's setup
 
-from distutils.core import setup
+from setuptools import setup
+
 setup(
 	name = "sauron",
 	packages = ["sauron"],
@@ -16,10 +17,15 @@ setup(
 		"Intended Audience :: Developers",
 		"Topic :: Software Development :: Libraries :: Python Modules"
 	],
+	entry_points = {
+		'setuptools.installation': [
+			'eggsecutable = sauron.reporter:main',
+		]
+	},
 	install_requires=[
 		"PyYAML >= 3.10",
 		"psutil >= 0.3.0",
-		"MySQL-python >= 1.2.3",
+		"pymysql >= 0.4",
 		"boto >= 2.0",
 		"tweepy >= 1.7.1",
 		"httplib2 >= 0.7.1"

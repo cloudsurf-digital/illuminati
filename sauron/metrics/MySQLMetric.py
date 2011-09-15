@@ -2,7 +2,7 @@
 
 import os
 import Metric
-import MySQLdb
+import pymysql
 import datetime
 
 class MySQLMetric(Metric.Metric):
@@ -11,20 +11,29 @@ class MySQLMetric(Metric.Metric):
 		self.host   = host
 		self.user   = user
 		self.passwd = passwd
+		self.conn   = None
+		self.cur    = None
+	
+	def __del__(self):
+		try:
+			self.cur.close()
+			self.conn.close()
+		except AttributeError:
+			pass
 	
 	def values(self):
 		try:
-			conn = MySQLdb.connect(host=self.host, user=self.user, passwd=self.passwd)
-			cursor = conn.cursor()
-			cursor.execute('show status')
-			r = dict(cursor.fetchall())
+			self.conn = pymysql.connect(host=self.host, user=self.user, passwd=self.passwd)
+			self.cur = self.conn.cursor()
+			self.cur.execute('show status')
+			r = dict(self.cur.fetchall())
 			return {
 				'results' : {
 					'uptime' : (r['Uptime'] , 'Seconds'),
 					'queries': (r['Queries'], 'Count')
 				}
 			}
-		except MySQLdb.OperationalError:
+		except pymysql.err.MySQLError:
 			raise Metric.MetricException('Failed to connect to mySQL.')
 		except KeyError:
 			raise Metric.MetricException('Could not find all keys in mySQL status')

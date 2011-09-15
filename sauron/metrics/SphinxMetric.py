@@ -2,7 +2,7 @@
 
 import os
 import Metric
-import MySQLdb
+import pymysql
 import datetime
 
 class SphinxMetric(Metric.Metric):
@@ -10,13 +10,22 @@ class SphinxMetric(Metric.Metric):
 		super(SphinxMetric,self).__init__(name)
 		self.host   = host
 		self.port   = port
+		self.conn   = None
+		self.cur    = None
+	
+	def __del__(self):
+		try:
+			self.cur.close()
+			self.conn.close()
+		except AttributeError:
+			pass
 	
 	def values(self):
 		try:
-			conn = MySQLdb.connect(host=self.host, port=self.port)
-			cursor = conn.cursor()
-			cursor.execute('show status')
-			r = dict(cursor.fetchall())
+			self.conn = pymysql.connect(host=self.host, port=self.port)
+			self.cur = self.conn.cursor()
+			self.cur.execute('show status')
+			r = dict(self.cur.fetchall())
 			return {
 				'results' : {
 					'uptime'   : (r['uptime'], 'Seconds'),
@@ -26,7 +35,7 @@ class SphinxMetric(Metric.Metric):
 					'avg_read' : (r['avg_query_readkb'], 'Kilobytes')
 				}
 			}
-		except MySQLdb.OperationalError:
+		except pymysql.err.MySQLError:
 			raise Metric.MetricException('Error connecting to sphinx searchd')
 		except KeyError:
 			raise Metric.MetricException('Could not find all keys in searchd status')
