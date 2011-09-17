@@ -12,7 +12,7 @@ logger = logging.getLogger('sauron')
 class S3BucketMetric(Metric.Metric):
 	def __init__(self, name, bucket, keys=None, **kwargs):
 		super(S3BucketMetric,self).__init__(name, keys)
-		self.bucket = bucket
+		self.bucketName = bucket
 		self.prefix = kwargs.get('prefix', '')
 		try:
 			self.conn = S3Connection(kwargs.get('aws_id', None), kwargs.get('aws_secret', None))
@@ -22,7 +22,7 @@ class S3BucketMetric(Metric.Metric):
 		
 	def values(self):
 		try:
-			self.bucket = self.conn.get_bucket(self.bucket)
+			self.bucket = self.conn.get_bucket(self.bucketName)
 			now = datetime.datetime.now()
 			youngest = 100
 			oldest = 0
