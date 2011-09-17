@@ -9,8 +9,21 @@ class MetricException(Exception):
 		return str(self.msg)
 
 class Metric(object):
-	def __init__(self, name):
+	def __init__(self, name, keys=None):
 		self.name = name
+		self.keys = keys
+	
+	def getValues(self):
+		if self.keys:
+			results = self.values()
+			results['results'] = dict((k, results['results'][k]) for k in self.keys)
+			return results
+		else:
+			return self.values()
 	
 	def values(self):
-		return {'key': (0, 'Count'), 'time': datetime.datetime.now()}
+		return {
+			'results': {
+				'key': (0, 'Count')
+			}, 'time': datetime.datetime.now()
+		}

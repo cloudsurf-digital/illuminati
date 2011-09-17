@@ -116,7 +116,7 @@ class Watcher(object):
 				logger.info('Querying %s' % m.name)
 				# Try to get values
 				try:
-					results[m.name] = m.values()
+					results[m.name] = m.getValues()
 				except Metric.MetricException as e:
 					logger.error(repr(e))
 			# Having aggregated all the metrics, pass it through all the emitters
