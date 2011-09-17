@@ -115,4 +115,12 @@ metrics:
     localhost:
         module: SystemMetric
     
-    
+    # Some S3 status
+    buckets:
+        module: S3BucketMetric
+        bucket: someBucket
+        aws_id: yourAWSAccessKeyId
+        aws_secret: yourAWSAccessSecretKey
+        keys:
+            - oldest
+            - count
