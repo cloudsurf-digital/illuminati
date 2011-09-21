@@ -91,7 +91,7 @@ class ProcMetric(Metric.Metric):
 			for p in psutil.process_iter():
 				if self.match(p):
 					count += 1
-					for key,attr in self.attrs:
+					for key,attr in self.attrs.items():
 						r = attr[0](p)
 						try:
 							results[key][0] += r
