@@ -19,7 +19,7 @@ class ProcMetric(Metric.Metric):
 			except KeyError:
 				pass
 			except re.error:
-				raise Metric.MetricException('Invalid regular expression: %s' % self.kwargs[k])		
+				raise Metric.MetricException('Invalid regular expression: %s' % self.kwargs[k])
 		try:
 			self.keys = kwargs['keys']
 		except (ValueError, KeyError):

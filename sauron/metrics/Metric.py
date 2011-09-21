@@ -1,5 +1,9 @@
 #! /usr/bin/env python
 
+import logging
+
+logger = logging.getLogger('sauron')
+
 class MetricException(Exception):
 	def __init__(self, message):
 		self.msg = message
@@ -16,7 +20,13 @@ class Metric(object):
 	def getValues(self):
 		if self.keys:
 			results = self.values()
-			results['results'] = dict((k, results['results'][k]) for k in self.keys)
+			pruned = {}
+			for k in self.keys:
+				try:
+					pruned[k] = results['results'][k]
+				except KeyError:
+					logger.warn('Key %s unavailable' % k)
+			results['results'] = pruned
 			return results
 		else:
 			return self.values()
