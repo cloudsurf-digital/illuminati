@@ -20,10 +20,6 @@ class ProcMetric(Metric.Metric):
 				pass
 			except re.error:
 				raise Metric.MetricException('Invalid regular expression: %s' % self.kwargs[k])
-		try:
-			self.keys = kwargs['keys']
-		except (ValueError, KeyError):
-			self.keys = ['user-cpu','sys-cpu','real-mem','virt-mem','files','children','connections','percent-mem','threads', 'uptime']
 		self.attrs = {
 			'user-cpu'    : (ProcMetric.userCPU, 'Seconds'),
 			'sys-cpu'     : (ProcMetric.sysCPU , 'Seconds'),
@@ -95,8 +91,7 @@ class ProcMetric(Metric.Metric):
 			for p in psutil.process_iter():
 				if self.match(p):
 					count += 1
-					for key in self.keys:
-						attr = self.attrs[key]
+					for key,attr in self.attrs:
 						r = attr[0](p)
 						try:
 							results[key][0] += r
