@@ -134,9 +134,16 @@ class Watcher(object):
 				results[m.name] = m.getValues()
 			except Metric.MetricException as e:
 				logger.exception('Error with metric.')
+			except:
+				logger.exception('Uncaught expection')
 		# Having aggregated all the metrics, pass it through all the emitters
 		for e in self.emitters:
-			e.metrics(results)
+			try:
+				e.metrics(results)
+			except Emitter.EmitterException:
+				logger.exception('Emitter exception')
+			except:
+				logger.exception('Uncaught expection')
 		
 	def start(self):
 		if self.loopingCall:
@@ -145,6 +152,7 @@ class Watcher(object):
 			try:
 				self.loopingCall = LoopingCall(self.sample)
 				self.loopingCall.start(self.interval)
+				reactor.run()
 			except:
 				logger.exception('Error starting')
 	
