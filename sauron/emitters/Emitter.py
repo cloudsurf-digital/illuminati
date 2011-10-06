@@ -2,6 +2,8 @@
 
 import logging
 
+logger = logging.getLogger('sauron')
+
 class EmitterException(Exception):
 	def __init__(self, message):
 		self.msg = message
@@ -11,8 +13,7 @@ class EmitterException(Exception):
 		return str(self.msg)
 
 class Emitter(object):
-	def __init__(self):
-		self.logger = logging.getLogger('sauron')
-	
 	def metrics(self, metrics):
-		pass
+		for k,m in metrics.items():
+			for metric,value in m['results'].items():
+				logger.info('\t%s-%s => %s' % (k,metric,repr(value)))
