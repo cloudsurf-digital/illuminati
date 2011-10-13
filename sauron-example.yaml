@@ -124,3 +124,28 @@ metrics:
         keys:
             - oldest
             - count
+    
+    # Redis monitoring
+    redis:
+        module: RedisMetric
+        host: my-redis-server
+        password: mySecretPassword
+        port: 6379
+        # The keys we want to save from Redis' info command
+        info:
+            - uptime_in_seconds
+            - used_cpu_sys
+            - used_cpu_user
+            - used_memory
+            - mem_fragmentation_ratio
+            - changes_since_last_save
+            - total_commands_processed
+        # The keys we should get, and interpret as a number
+        get:
+            - stats-jobs-finished
+            - stats-jobs-failed
+        # The keys we should lookup and get the length of
+        length:
+            - queue-work
+            - queue-finished
+            - queue-failed
