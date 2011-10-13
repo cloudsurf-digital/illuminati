@@ -76,6 +76,7 @@ class RedisMetric(Metric.Metric):
 		self.info   = kwargs.get('info'  , [])
 		# The keys we should get and interpret as numbers
 		self.get    = kwargs.get('get'   , [])
+		print '%s' % repr(self.get)
 		# The keys we should get, and report their length
 		self.length = kwargs.get('length', [])
 	
@@ -89,12 +90,17 @@ class RedisMetric(Metric.Metric):
 				except:
 					results[i] = (info[i], 'None')
 			
-			for g in self.get:
-				results[i] = (self.redis.get(g), 'Count')
-			
-			for l in self.length:
-				results[i] = (self.redis.llen(l), 'Count')
-			
+			both = list(self.get)
+			both.extend(self.length)
+			with self.redis.pipeline() as pipe:
+				for g in self.get:
+					pipe.get(g)
+				for l in self.length:
+					pipe.llen(l)
+				fetched = pipe.execute()
+				for index in range(len(fetched)):
+					results[both[index]] = (fetched[index], 'Count')
+
 			return {'results': results}
 		except redis.RedisError as e:
 			raise Metric.MetricException(e)
