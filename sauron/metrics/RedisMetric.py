@@ -6,13 +6,16 @@ import Metric
 class RedisMetric(Metric.Metric):
 	@staticmethod
 	def parseMemory(x):
-		if 'G' in x:
-			return (x.replace('G', ''), 'Gigabytes')
-		elif 'M' in x:
-			return (x.replace('M', ''), 'Megabytes')
-		elif 'K' in x:
-			return (x.replace('K', ''), 'Kilobytes')
-		else:
+		try:
+			if 'G' in x:
+				return (x.replace('G', ''), 'Gigabytes')
+			elif 'M' in x:
+				return (x.replace('M', ''), 'Megabytes')
+			elif 'K' in x:
+				return (x.replace('K', ''), 'Kilobytes')
+			else:
+				return (x, 'Bytes')
+		except:
 			return (x, 'Bytes')
 	
 	infoUnits = {
@@ -33,20 +36,20 @@ class RedisMetric(Metric.Metric):
 		'client_longest_output_list': lambda x: (x, 'Count'),
 		'client_biggest_input_buf'  : lambda x: (x, 'Bytes'),
 		'blocked_clients'           : lambda x: (x, 'Count'),
-		'used_memory'               : lambda x: parseMemory(x),
-		'used_memory_human'         : lambda x: parseMemory(x),
-		'used_memory_rss'           : lambda x: parseMemory(x),
-		'used_memroy_peak'          : lambda x: parseMemory(x),
-		'used_memory_peak_human'    : lambda x: parseMemory(x),
+		'used_memory'               : lambda x: RedisMetric.parseMemory(x),
+		'used_memory_human'         : lambda x: RedisMetric.parseMemory(x),
+		'used_memory_rss'           : lambda x: RedisMetric.parseMemory(x),
+		'used_memroy_peak'          : lambda x: RedisMetric.parseMemory(x),
+		'used_memory_peak_human'    : lambda x: RedisMetric.parseMemory(x),
 		'mem_fragmentation_ratio'   : lambda x: (x, 'None'),
 		'loading'                   : lambda x: (x, 'None'),
 		'aof_enabled'               : lambda x: (x, 'None'),
-		'changes_sing_last_save'    : lambda x: (x, 'Count'),
+		'changes_since_last_save'   : lambda x: (x, 'Count'),
 		'bgsave_in_progress'        : lambda x: (x, 'None'),
 		'last_save_time'            : lambda x: (x, 'Seconds'),
 		'bgrewriteaof_in_progress'  : lambda x: (x, 'None'),
 		'total_connections_received': lambda x: (x, 'Count'),
-		'total_commands_process'    : lambda x: (x, 'Count'),
+		'total_commands_processed'  : lambda x: (x, 'Count'),
 		'expired_keys'              : lambda x: (x, 'Count'),
 		'evicted_keys'              : lambda x: (x, 'Count'),
 		'keyspace_hits'             : lambda x: (x, 'Count'),
@@ -92,7 +95,8 @@ class RedisMetric(Metric.Metric):
 			for i in self.info:
 				try:
 					results[i] = RedisMetric.infoUnits[i](info[i])
-				except:
+				except Exception as e:
+					print repr(e)
 					results[i] = (info[i], 'None')
 			
 			both = list(self.get)
