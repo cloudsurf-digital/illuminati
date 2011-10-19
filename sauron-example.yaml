@@ -145,7 +145,17 @@ metrics:
             - stats-jobs-finished
             - stats-jobs-failed
         # The keys we should lookup and get the length of
-        length:
+        llen:
             - queue-work
             - queue-finished
             - queue-failed
+        # The keys we should lookup and get the hash length of
+        hlen:
+            - myhash
+        # 'Nuff said
+        hget:
+            stats: wins
+            stats: losses
+        # Again, 'nuff said
+        scard:
+            - myset
