@@ -64,7 +64,10 @@ class RedisMetric(Metric.Metric):
 	}
 
 	def __init__(self, name, **kwargs):
-		super(RedisMetric,self).__init__(name)
+		Metric.Metric.__init__(self, name)
+		self.reconfig(name, **kwargs)
+	
+	def reconfig(self, name, **kwargs):
 		# These are a selection of argument names. If they're
 		# present, then we'll use them, otherwise, we'll use 
 		# the default provided by the redis module itself

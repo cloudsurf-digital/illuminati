@@ -7,7 +7,11 @@ import datetime
 
 class MySQLMetric(Metric.Metric):
 	def __init__(self, name, host=None, user=None, passwd=None):
-		super(MySQLMetric,self).__init__(name)
+		Metric.Metric.__init__(self, name)
+		self.reconfig(name, host, user, passwd)
+	
+	def reconfig(self, name, host=None, user=None, passwd=None):
+		self.name   = name
 		self.host   = host
 		self.user   = user
 		self.passwd = passwd

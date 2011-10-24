@@ -33,35 +33,50 @@ logger.addHandler(handler)
 
 class Watcher(object):
 	def __init__(self, dryrun=False):
-		self.metrics   = []
-		self.emitters  = []
+		self.metrics   = {}
+		self.emitters  = {}
 		self.interval  = None
-		self.logfile   = None
+		self.loghandler= None
 		self.dryrun    = dryrun
 		self.loopingCall = None
-		self.readConfig()
-		
-	def readConfig(self):
+		self.files = {'/etc/sauron.yaml':None, 'sauron.yaml':None}
+		self.readconfig()
+	
+	def readconfig(self):
 		data = {}
-		for fname in ['/etc/sauron.yaml', 'sauron.yaml']:
+		for fname, updated in self.files.items():
 			try:
-				with open(fname) as f:
-					f = file(fname)
-					if len(data):
-						print 'Warning: %s overriding prior settings' % fname
-						logger.warn('%s overriding prior settings' % fname)
-					data = yaml.safe_load(f)
-					f.close()
+				# Get the last time this file was updated, if ever
+				mtime = os.stat(fname).st_mtime
+				if not updated or (mtime > self.files[fname]):
+					with open(fname) as f:
+						f = file(fname)
+						if data:
+							print 'Warning: %s overriding prior settings' % fname
+							logger.warn('%s overriding prior settings' % fname)
+						data = yaml.safe_load(f)
+						f.close()
+						self.files[fname] = mtime
 			except IOError:
 				pass
-
+			except OSError:
+				pass
+			except Exception:
+				logger.exception('Reconfig failure.')
+		if data:
+			logger.info('Reading configuration')
+			self.reconfig(data)
+		
+	def reconfig(self, data):
 		self.interval = int(data.get('interval', 60))
-		self.logfile  = data.get('logfile', '/var/log/sauron.log')
+		if self.loghandler:
+			logger.removeHandler(self.loghandler)
+		fname = data.get('logfile', '/var/log/sauron.log')
 		# Set up the logging file
-		fHandler = logging.FileHandler(self.logfile, mode='a')
-		fHandler.setFormatter(formatter)
-		fHandler.setLevel(logging.INFO)
-		logger.addHandler(fHandler)
+		self.loghandler = logging.FileHandler(fname, mode='a')
+		self.loghandler.setFormatter(formatter)
+		self.loghandler.setLevel(logging.INFO)
+		logger.addHandler(self.loghandler)
 		
 		# Read in /all/ the metrics!
 		try:
@@ -70,14 +85,17 @@ class Watcher(object):
 				exit(1)
 			for key,value in data['metrics'].items():
 				try:
-					module = value['module']
-					m = __import__('metrics.%s' % module)
-					m = getattr(m, module)
-					c = getattr(m, module)
-					d = dict(value.items())
-					del d['module']
-					d['name'] = key
-					self.metrics.append(c(**d))
+					try:
+						d = dict(value.items())
+						self.metrics[key].reconfig(**d)
+					except:
+						module = value['module']
+						m = __import__('metrics.%s' % module)
+						m = getattr(m, module)
+						c = getattr(m, module)
+						del d['module']
+						d['name'] = key
+						self.metrics[key] = c(**d)
 				except KeyError:
 					logger.exception('No module listed for metric %s' % key)
 					exit(1)
@@ -98,7 +116,7 @@ class Watcher(object):
 		try:
 			if self.dryrun:
 				logger.warn('Skipping all emitters because of --dry-run')
-				self.emitters.append(Emitter.Emitter())
+				self.emitters[''] = Emitter.Emitter()
 				return
 			if len(data['emitters']) == 0:
 				logger.error('No metrics in config file!')
@@ -109,7 +127,7 @@ class Watcher(object):
 					m = getattr(m, key)
 					c = getattr(m, key)
 					d = dict(value.items())
-					self.emitters.append(c(**d))
+					self.emitters[key] = c(**d)
 				except ImportError:
 					logger.exception('Unable to import module %s' % key)
 					exit(1)
@@ -124,10 +142,12 @@ class Watcher(object):
 			exit(1)
 	
 	def sample(self):
+		# Try to re-read the configuration files
+		self.readconfig()
 		logger.info('Reporting metrics...')
 		results = {}
 		# Aggregate all the metrics
-		for m in self.metrics:
+		for m in self.metrics.values():
 			logger.info('Querying %s' % m.name)
 			# Try to get values
 			try:
@@ -137,7 +157,7 @@ class Watcher(object):
 			except:
 				logger.exception('Uncaught expection')
 		# Having aggregated all the metrics, pass it through all the emitters
-		for e in self.emitters:
+		for e in self.emitters.values():
 			try:
 				e.metrics(results)
 			except Emitter.EmitterException:

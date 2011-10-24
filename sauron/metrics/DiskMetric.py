@@ -6,10 +6,13 @@ import datetime
 
 class DiskMetric(Metric.Metric):
 	def __init__(self, name, path, keys):
-		super(DiskMetric,self).__init__(name)
-		self.path = path
-		self.keys = keys
+		Metric.Metric.__init__(self, name, keys)
+		self.reconfig(name, path, keys)
 	
+	def reconfig(self, name, path, keys):
+		Metric.Metric.reconfig(self, name, keys)
+		self.path = path
+		
 	def values(self):
 		# Reference:
 		# http://stackoverflow.com/questions/787776/find-free-disk-space-in-python-on-os-x

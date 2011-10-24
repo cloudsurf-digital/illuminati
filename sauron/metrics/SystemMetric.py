@@ -5,9 +5,6 @@ import Metric
 import datetime
 
 class SystemMetric(Metric.Metric):
-	def __init__(self, name):
-		super(SystemMetric,self).__init__(name)
-	
 	def values(self):
 		try:
 			phys = psutil.phymem_usage()

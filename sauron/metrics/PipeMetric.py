@@ -10,7 +10,10 @@ logger = logging.getLogger('sauron')
 
 class PipeMetric(Metric.Metric):
 	def __init__(self, name, path, **kwargs):
-		super(PipeMetric,self).__init__(name)
+		Metric.Metric.__init__(self, name)
+		self.reconfig(name, path, **kwargs)
+	
+	def reconfig(self, path, **kwargs):
 		self.patterns = dict([(k, re.compile(v)) for k,v in kwargs.items()])
 		self.path = path
 		try:

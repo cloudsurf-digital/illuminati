@@ -9,7 +9,10 @@ import datetime
 
 class ProcMetric(Metric.Metric):
 	def __init__(self, name, **kwargs):
-		super(ProcMetric,self).__init__(name)
+		Metric.Metric.__init__(self, name)
+		self.reconfig(self, name, **kwargs)
+	
+	def reconfig(self, name, **kwargs):
 		self.kwargs = kwargs
 		self.kwargs['name'] = name
 		re.compile(name)

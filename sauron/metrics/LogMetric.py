@@ -9,11 +9,15 @@ logger = logging.getLogger('sauron')
 
 class LogMetric(Metric.Metric):
 	def __init__(self, name, path, **kwargs):
-		super(LogMetric,self).__init__(name)
+		Metric.Metric.__init__(self, name)
+		self.reconfig(name, path, **kwargs)
+	
+	def reconfig(self, name, path, **kwargs):
+		self.name = name
 		self.patterns = dict([(k, re.compile(v)) for k,v in kwargs.items()])
 		self.path = path
 		try:
-			self.f    = file(self.path)		# The file object we'll read from
+			self.f = file(self.path)	# The file object we'll read from
 		except IOError as e:
 			raise Metric.MetricException(e)
 		self.stat = os.lstat(self.path)	# The stats on that particular file

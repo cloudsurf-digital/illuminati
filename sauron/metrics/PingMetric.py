@@ -6,11 +6,14 @@ import urllib2
 import datetime
 
 class PingMetric(Metric.Metric):
-	def __init__(self, name, url, post=None, timeout=30):
-		super(PingMetric,self).__init__(name)
+	def __init__(self, name, **kwargs):
+		Metric.Metric.__init__(self, name)
+		self.reconfig(name, **kwargs)
+		
+	def reconfig(self, name, url, post=None, timeout=30):
 		self.url  = url
 		self.post = post
-		self.timeout = timeout
+		self.timeout = timeout	
 	
 	def values(self):
 		start = datetime.datetime.now()

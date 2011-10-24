@@ -6,7 +6,10 @@ import subprocess
 
 class ShellMetric(Metric.Metric):
 	def __init__(self, name, cmd, units):
-		super(ShellMetric,self).__init__(name)
+		Metric.Metric.__init__(self, name)
+		self.reconfig(name, cmd, units)
+	
+	def reconfig(self, name, cmd, units):
 		self.cmd   = cmd
 		self.units = units
 	

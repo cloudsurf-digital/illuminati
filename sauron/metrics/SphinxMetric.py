@@ -7,7 +7,10 @@ import datetime
 
 class SphinxMetric(Metric.Metric):
 	def __init__(self, name, host='127.0.0.1', port=9306):
-		super(SphinxMetric,self).__init__(name)
+		Metric.Metric.__init__(self, name)
+		self.reconfig(name, host, port)
+	
+	def reconfig(self, name, host='127.0.0.1', port=9306):
 		self.host   = host
 		self.port   = port
 		self.conn   = None

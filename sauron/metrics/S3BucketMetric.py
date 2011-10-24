@@ -11,7 +11,10 @@ logger = logging.getLogger('sauron')
 
 class S3BucketMetric(Metric.Metric):
 	def __init__(self, name, bucket, keys=None, **kwargs):
-		super(S3BucketMetric,self).__init__(name, keys)
+		Metric.Metric.__init__(self, name, keys)
+		self.reconfig(name, bucket, keys, **kwargs)
+
+	def reconfig(self, name, bucket, keys=None, **kwargs):
 		self.bucketName = bucket
 		self.prefix = kwargs.get('prefix', '')
 		try:

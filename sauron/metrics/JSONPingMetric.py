@@ -7,8 +7,12 @@ import datetime
 import simplejson as json
 
 class JSONPingMetric(Metric.Metric):
-	def __init__(self, name, url, post=None, timeout=30):
-		super(JSONPingMetric,self).__init__(name)
+	def __init__(self, name, **kwargs):
+		Metric.Metric.__init__(self, name)
+		self.reconfig(name, **kwargs)
+	
+	def reconfig(self, name, url, post=None, timeout=30):
+		self.name = name
 		self.url  = url
 		self.post = post
 		self.timeout = timeout
