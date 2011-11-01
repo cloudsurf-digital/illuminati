@@ -1,13 +1,14 @@
 #! /usr/bin/env python
 
 import os
-import Metric
 import pymysql
 import datetime
+from sauron import logger
+from sauron.metrics import Metric, MetricException
 
-class MySQLMetric(Metric.Metric):
+class MySQLMetric(Metric):
 	def __init__(self, name, host=None, user=None, passwd=None):
-		Metric.Metric.__init__(self, name)
+		Metric.__init__(self, name)
 		self.reconfig(name, host, user, passwd)
 	
 	def reconfig(self, name, host=None, user=None, passwd=None):
@@ -38,7 +39,7 @@ class MySQLMetric(Metric.Metric):
 				}
 			}
 		except pymysql.err.MySQLError:
-			raise Metric.MetricException('Failed to connect to mySQL.')
+			raise MetricException('Failed to connect to mySQL.')
 		except KeyError:
-			raise Metric.MetricException('Could not find all keys in mySQL status')
+			raise MetricException('Could not find all keys in mySQL status')
 	

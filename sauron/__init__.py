@@ -8,22 +8,17 @@ import socket			# For getting the hostname, oddly enough
 import logging			# Log nicely
 import datetime			# For default times
 
-# Append our current path before this import
-p = os.path.dirname(os.path.abspath(__file__))
-if p not in sys.path:
-	sys.path.insert(0, p)
+# Logging stuff
+logger = logging.getLogger('sauron')
+logger.setLevel(logging.INFO)
 
-from metrics import Metric
-from emitters import Emitter
+from metrics  import Metric,  MetricException
+from emitters import Emitter, EmitterException
 
 # We'll use twisted to be able to react to events,
 # and to call for logging periodically
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
-
-# Logging stuff
-logger = logging.getLogger('sauron')
-logger.setLevel(logging.INFO)
 
 formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] @ %(module)s:%(funcName)s : %(message)s')
 handler = logging.StreamHandler()
@@ -90,7 +85,8 @@ class Watcher(object):
 						self.metrics[key].reconfig(**d)
 					except:
 						module = value['module']
-						m = __import__('metrics.%s' % module)
+						m = __import__('sauron.metrics.%s' % module)
+						m = getattr(m, 'metrics')
 						m = getattr(m, module)
 						c = getattr(m, module)
 						del d['module']
@@ -105,7 +101,7 @@ class Watcher(object):
 				except TypeError as e:
 					logger.exception('Unable to initialize metric %s' % key)
 					exit(1)
-				except Metric.MetricException as e:
+				except MetricException as e:
 					logger.exception('Module Exception %s' % module)
 					exit(1)
 		except KeyError:
@@ -116,14 +112,15 @@ class Watcher(object):
 		try:
 			if self.dryrun:
 				logger.warn('Skipping all emitters because of --dry-run')
-				self.emitters[''] = Emitter.Emitter()
+				self.emitters[''] = Emitter()
 				return
 			if len(data['emitters']) == 0:
 				logger.error('No metrics in config file!')
 				exit(1)
 			for key,value in data['emitters'].items():
 				try:
-					m = __import__('emitters.%s' % key)
+					m = __import__('sauron.emitters.%s' % key)
+					m = getattr(m, 'emitters')
 					m = getattr(m, key)
 					c = getattr(m, key)
 					d = dict(value.items())
@@ -134,7 +131,7 @@ class Watcher(object):
 				except TypeError as e:
 					logger.exception('Unable to initialize emitter %s' % key)
 					exit(1)
-				except Emitter.EmitterException as e:
+				except EmitterException as e:
 					logger.exception('Error with module %s' % module)
 					exit(1)
 		except:
@@ -152,7 +149,7 @@ class Watcher(object):
 			# Try to get values
 			try:
 				results[m.name] = m.getValues()
-			except Metric.MetricException as e:
+			except MetricException as e:
 				logger.exception('Error with metric.')
 			except:
 				logger.exception('Uncaught expection')
@@ -160,7 +157,7 @@ class Watcher(object):
 		for e in self.emitters.values():
 			try:
 				e.metrics(results)
-			except Emitter.EmitterException:
+			except EmitterException:
 				logger.exception('Emitter exception')
 			except:
 				logger.exception('Uncaught expection')

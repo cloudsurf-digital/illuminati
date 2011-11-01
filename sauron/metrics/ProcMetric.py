@@ -4,12 +4,13 @@ import re
 import os
 import time
 import psutil
-import Metric
 import datetime
+from sauron import logger
+from sauron.metrics import Metric, MetricException
 
-class ProcMetric(Metric.Metric):
+class ProcMetric(Metric):
 	def __init__(self, name, **kwargs):
-		Metric.Metric.__init__(self, name)
+		Metric.__init__(self, name)
 		self.reconfig(self, name, **kwargs)
 	
 	def reconfig(self, name, **kwargs):
@@ -22,7 +23,7 @@ class ProcMetric(Metric.Metric):
 			except KeyError:
 				pass
 			except re.error:
-				raise Metric.MetricException('Invalid regular expression: %s' % self.kwargs[k])
+				raise MetricException('Invalid regular expression: %s' % self.kwargs[k])
 		self.attrs = {
 			'user-cpu'    : (ProcMetric.userCPU, 'Seconds'),
 			'sys-cpu'     : (ProcMetric.sysCPU , 'Seconds'),
@@ -103,6 +104,6 @@ class ProcMetric(Metric.Metric):
 			results['count'] = (count, 'Count')
 			return {'results': dict((k, tuple(v)) for k,v in results.items())}
 		except psutil.error.AccessDenied:
-			raise Metric.MetricException('Access denied for matched process.')
+			raise MetricException('Access denied for matched process.')
 		except OSError as e:
-			raise Metric.MetricException(e)
+			raise MetricException(e)

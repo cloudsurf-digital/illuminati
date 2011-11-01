@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 
 import redis
-import Metric
+from sauron import logger
+from sauron.metrics import Metric, MetricException
 
-class RedisMetric(Metric.Metric):
+class RedisMetric(Metric):
 	@staticmethod
 	def parseMemory(x):
 		try:
@@ -64,7 +65,7 @@ class RedisMetric(Metric.Metric):
 	}
 
 	def __init__(self, name, **kwargs):
-		Metric.Metric.__init__(self, name)
+		Metric.__init__(self, name)
 		self.reconfig(name, **kwargs)
 	
 	def reconfig(self, name, **kwargs):
@@ -124,4 +125,4 @@ class RedisMetric(Metric.Metric):
 
 			return {'results': results}
 		except redis.RedisError as e:
-			raise Metric.MetricException(e)
+			raise MetricException(e)

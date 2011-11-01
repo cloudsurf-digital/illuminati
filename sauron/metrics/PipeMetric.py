@@ -2,15 +2,13 @@
 
 import re
 import os
-import Metric
 import select
-import logging
+from sauron import logger
+from sauron.metrics import Metric, MetricException
 
-logger = logging.getLogger('sauron')
-
-class PipeMetric(Metric.Metric):
+class PipeMetric(Metric):
 	def __init__(self, name, path, **kwargs):
-		Metric.Metric.__init__(self, name)
+		Metric.__init__(self, name)
 		self.reconfig(name, path, **kwargs)
 	
 	def reconfig(self, path, **kwargs):

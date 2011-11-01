@@ -1,13 +1,14 @@
 #! /usr/bin/env python
 
 import os
-import Metric
 import urllib2
 import datetime
+from sauron import logger
+from sauron.metrics import Metric, MetricException
 
-class PingMetric(Metric.Metric):
+class PingMetric(Metric):
 	def __init__(self, name, **kwargs):
-		Metric.Metric.__init__(self, name)
+		Metric.__init__(self, name)
 		self.reconfig(name, **kwargs)
 		
 	def reconfig(self, name, url, post=None, timeout=30):
@@ -22,8 +23,9 @@ class PingMetric(Metric.Metric):
 		except urllib2.HTTPError:
 			pass
 		except IOError:
-			raise Metric.MetricException('Failed to fetch %s' % self.url)
+			raise MetricException('Failed to fetch %s' % self.url)
 		try:
+			# Apparently different implementations don't expose this
 			latency = (datetime.datetime.now() - start).total_seconds()
 		except AttributeError:
 			latency = (datetime.datetime.now() - start).seconds

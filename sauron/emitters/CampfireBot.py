@@ -1,16 +1,14 @@
 #! /usr/bin/env python
 
-import Emitter
-import logging
 import threading
+from sauron import logger
 from pinder import Campfire
 from twisted.internet import reactor
+from sauron.emitters import Emitter, EmitterException
 
-logger = logging.getLogger('sauron')
-
-class CampfireBot(Emitter.Emitter):
+class CampfireBot(Emitter):
 	def __init__(self, subdomain, token):
-		super(Emitter.Emitter,self).__init__()
+		super(Emitter,self).__init__()
 		logger.info('Making Campfire...')
 		self.camp = Campfire(subdomain, token)
 		logger.info('Rooms...')

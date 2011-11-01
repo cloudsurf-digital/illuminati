@@ -1,0 +1,42 @@
+#! /bin/sh
+
+# Exit if a single command fails
+set -e
+
+# Run as sauron
+NAME=sauron
+# Store the pid file in an appropriate place
+PIDFILE=/var/run/$NAME.pid
+# Run sauron, currently with no options
+DAEMON=saurond
+DAEMON_OPTS=""
+
+export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
+
+case "$1" in
+	start)
+		# Start the thing, obviously
+		echo -n "Starting daemon: "$NAME
+		start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE --background --exec $DAEMON -- $DAEMON_OPTS
+		echo "."
+	;;
+	stop)
+		# And stop it
+		echo -n "Stopping daemon: "$NAME
+		start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
+		echo "."
+	;;
+	restart)
+		# Restart it, though this shouldn't be needed
+		echo -n "Restarting daemon: "$NAME
+		start-stop-daemon --stop --quiet --oknodo --retry 30 --pidfile $PIDFILE
+		start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- $DAEMON_OPTS
+		echo "."
+	;;
+	*)
+		# Didn't get any of the expected commands
+		echo "Usage: "$1" {start|stop|restart}"
+		exit 1
+esac
+
+exit 0

@@ -1,13 +1,11 @@
 #! /usr/bin/env python
 
-import Emitter
-import logging
 import httplib2
 import simplejson as json
+from sauron import logger
+from sauron.emitters import Emitter, EmitterException
 
-logger = logging.getLogger('sauron')
-
-class HTTPEndpoint(Emitter.Emitter):
+class HTTPEndpoint(Emitter):
 	def __init__(self, url, method='PUT'):
 		super(HTTPEndpoint,self).__init__()
 		self.url = url

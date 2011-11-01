@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 
 import psutil
-import Metric
 import datetime
+from sauron import logger
+from sauron.metrics import Metric, MetricException
 
-class SystemMetric(Metric.Metric):
+class SystemMetric(Metric):
 	def values(self):
 		try:
 			phys = psutil.phymem_usage()
@@ -15,6 +16,6 @@ class SystemMetric(Metric.Metric):
 				}
 			}
 		except OSError as e:
-			raise Metric.MetricException(e)
+			raise MetricException(e)
 		except psutil.error.AccessDenied as e:
-			raise Metric.MetricException('Access denied in psutil')
+			raise MetricException('Access denied in psutil')

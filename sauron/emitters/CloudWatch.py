@@ -1,17 +1,15 @@
 #! /usr/bin/env python
 
-import Emitter
 import urllib2			# Need this to determine our instance ID
-import logging
 import datetime
+from sauron import logger
 from boto.sns import SNSConnection
-from boto.ec2.cloudwatch import CloudWatchConnection
 from boto.ec2.cloudwatch.alarm import MetricAlarm
+from boto.ec2.cloudwatch import CloudWatchConnection
+from sauron.emitters import Emitter, EmitterException
 from boto.ec2.cloudwatch.listelement import ListElement
 
-logger = logging.getLogger('sauron')
-
-class CloudWatch(Emitter.Emitter):
+class CloudWatch(Emitter):
 	def __init__(self, namespace, dimensions={}, alarms={}, actions={}):
 		super(CloudWatch,self).__init__()
 		self.namespace = namespace
@@ -39,10 +37,10 @@ class CloudWatch(Emitter.Emitter):
 				arn = conn.create_topic(name)['CreateTopicResponse']['CreateTopicResult']['TopicArn']
 				self.actions[name] = arn
 			except KeyError:
-				raise Emitter.EmitterException('Bad response creating topic %s' % name)
+				raise EmitterException('Bad response creating topic %s' % name)
 			
 			if len(subscriptions) == 0:
-				raise Emitter.EmitterException('No subscriptions for action %s' % name)
+				raise EmitterException('No subscriptions for action %s' % name)
 			# Now try to arrange for subscriptions
 			# Oddly enough, calling create_topic doesn't have any effect
 			# if the topic already exists, but calling subscribe() for an
@@ -76,7 +74,7 @@ class CloudWatch(Emitter.Emitter):
 				insufficient_data_actions = [self.actions[a] for a in atts.pop('insufficient_data', [])]
 				ok_actions = [self.actions[a] for a in atts.pop('ok', [])]
 			except KeyError as e:
-				raise Emitter.EmitterException('Unknown action %s' % repr(e))
+				raise EmitterException('Unknown action %s' % repr(e))
 			# Set some defaults:
 			atts['statistic'] = atts.get('statistic', 'Average')
 			atts['period'] = atts.get('period', 60)

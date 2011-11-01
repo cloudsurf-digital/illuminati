@@ -1,13 +1,14 @@
 #! /usr/bin/env python
 
 import os
-import Metric
 import pymysql
 import datetime
+from sauron import logger
+from sauron.metrics import Metric, MetricException
 
-class SphinxMetric(Metric.Metric):
+class SphinxMetric(Metric):
 	def __init__(self, name, host='127.0.0.1', port=9306):
-		Metric.Metric.__init__(self, name)
+		Metric.__init__(self, name)
 		self.reconfig(name, host, port)
 	
 	def reconfig(self, name, host='127.0.0.1', port=9306):
@@ -39,6 +40,6 @@ class SphinxMetric(Metric.Metric):
 				}
 			}
 		except pymysql.err.MySQLError:
-			raise Metric.MetricException('Error connecting to sphinx searchd')
+			raise MetricException('Error connecting to sphinx searchd')
 		except KeyError:
-			raise Metric.MetricException('Could not find all keys in searchd status')
+			raise MetricException('Could not find all keys in searchd status')

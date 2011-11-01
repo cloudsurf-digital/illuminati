@@ -1,17 +1,17 @@
 #! /usr/bin/env python
 
 import os
-import Metric
-import logging
 import datetime
-from boto.s3.connection import S3Connection
+from sauron import logger
 from boto.exception import BotoClientError
+from boto.s3.connection import S3Connection
+from sauron.metrics import Metric, MetricException
 
 logger = logging.getLogger('sauron')
 
-class S3BucketMetric(Metric.Metric):
+class S3BucketMetric(Metric):
 	def __init__(self, name, bucket, keys=None, **kwargs):
-		Metric.Metric.__init__(self, name, keys)
+		Metric.__init__(self, name, keys)
 		self.reconfig(name, bucket, keys, **kwargs)
 
 	def reconfig(self, name, bucket, keys=None, **kwargs):
@@ -21,7 +21,7 @@ class S3BucketMetric(Metric.Metric):
 			self.conn = S3Connection(kwargs.get('aws_id', None), kwargs.get('aws_secret', None))
 			self.bucket = self.conn.get_bucket(bucket)
 		except BotoClientError as e:
-			raise Metric.MetricException(repr(e))
+			raise MetricException(repr(e))
 		
 	def values(self):
 		try:
@@ -49,7 +49,7 @@ class S3BucketMetric(Metric.Metric):
 			results = []
 			len()
 		except BotoClientError as e:
-			raise Metric.MetricException(repr(e))
+			raise MetricException(repr(e))
 		except ValueError as e:
 			# Time misparsing can cause this
-			raise Metric.MetricException(repr(e))
+			raise MetricException(repr(e))

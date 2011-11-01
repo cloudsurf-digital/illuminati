@@ -1,14 +1,15 @@
 #! /usr/bin/env python
 
 import os
-import Metric
 import urllib2
 import datetime
 import simplejson as json
+from sauron import logger
+from sauron.metrics import Metric, MetricException
 
-class JSONPingMetric(Metric.Metric):
+class JSONPingMetric(Metric):
 	def __init__(self, name, **kwargs):
-		Metric.Metric.__init__(self, name)
+		Metric.__init__(self, name)
 		self.reconfig(name, **kwargs)
 	
 	def reconfig(self, name, url, post=None, timeout=30):
@@ -24,11 +25,11 @@ class JSONPingMetric(Metric.Metric):
 			results = json.loads(urllib2.urlopen(self.url, self.post).read())
 			results = dict((k,(v, 'Count')) for k,v in results.items())
 		except json.decoder.JSONDecodeError as e:
-			raise Metric.MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
+			raise MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
 		except urllib2.HTTPError as e:
-			raise Metric.MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
+			raise MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
 		except IOError as e:
-			raise Metric.MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
+			raise MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
 		# Some systems are stupid, and don't have total_seconds
 		try:
 			results['latency'] = ((datetime.datetime.now() - start).total_seconds(), 'Seconds')
