@@ -8,11 +8,33 @@ health, pinging servers, etc. These metrics are then pushed to "emitters" which
 describe where that data should go. Multiple emitters can be used, and are meant
 to be interchangeable.
 
+Installation
+------------
+
+Install with pip or easy\_install, or install from git:
+
+	sudo pip install sauron
+	# Or, installing from git
+	git clone git@github.com:seomoz/sauron.git
+	cd sauron && sudo python setup.py install
+
 Running
 -------
 
-Soon we'll have a little init.d script, but for the time being, just run reporter.py
-as either nohup or with screen.
+If you'd like to run sauron straight-up without daemonizing (for example for 
+testing your configuration):
+
+	# Attempt to gather all your stats, without sending anywhere
+	sauron-daemon --dry-run
+
+Instead, if you'd like to daemonize (pid file in /var/run/sauron.pid)
+
+	# Start it or stop it
+	sauron start
+	sauron stop
+	# Since sauron re-reads the configuration file automatically,
+	# this is only necessary between sauron upgrades
+	sauron restart
 
 Dependencies
 ============
@@ -20,7 +42,7 @@ Dependencies
 The only dependencies for sauron itself:
 
 * __python__
-* __pyyaml__
+* __pyyaml__ is used for reading configuration files
 
 Metric dependencies:
 
@@ -37,25 +59,27 @@ time of writing, but if you have boto 1.9, you'll need to upgrade.
 Installing Dependencies
 -----------------------
 
+Dependencies are automatically installed with sauron, but if for whatever reason you
+have trouble, you can install them manually
+
+	sudo easy_install boto
 	sudo easy_install pyyaml
 	sudo easy_install psutil
-	sudo easy_install mysql-python
-	sudo easy_install boto
 	sudo easy_install tweepy
 	sudo easy_install httplib2
+	sudo easy_install mysql-python
 
 Configuration
 =============
 
-Store your configuration file in either ./sauron.yaml or /etc/sauron.yaml, in YAML-
+Store your configuration file in either `./sauron.yaml` or `/etc/sauron.yaml`, in YAML-
 style format. Each section can be the name of a metric, and then the paramters
 specific to that metric. All metrics at least include a name, which must be provided
 in the configuration file, as a key in the metrics dictionary and then a module. The
 rest of the arguments are specific to the particular metric.
 
 System-wide configuration is just the interval and the path to the log file. Emitters
-represent the destinations to which you want to push. Currently, only CloudWatch is
-supported, but I hope to implement more soon.
+represent the destinations to which you want to push.
 
 	interval:   60
 	logfile:    sauron.log
@@ -88,202 +112,42 @@ supported, but I hope to implement more soon.
 Emitters
 ========
 
-Currently, we only support CloudWatch, but we'd like that to change.
+Emitters are responsible for taking stats that have been gathered, and doing something
+with them. Whether that's to send them along to another computer or store them for later
+queries, each emitter gets to handle the metrics in its own way. For more detailed
+information, refer to the emitters' README.md. __Emitters are easily extensible__, Currently
+included emitters are:
 
-CloudWatch _[New]_
-------------------
+* CloudWatch (for reporting to Amazon's [CloudWatch](http://aws.amazon.com/cloudwatch/))
+* Twitter (tweets each of the gathered metrics)
 
-To use CloudWatch, you must have ~/.boto set up with your AWS Identity and Secret keys.
-You must also then specify a namespace for your metrics, and optionally additional dimensions.
-If you are running sauron on an EC2 instance, it will automatically include the instance-id
-in the dimensions.
+Others are in the works, including support for:
 
-[__CloudWatch Alarms__](http://aws.amazon.com/documentation/cloudwatch/) can now be baked into
-the configuration of the CloudWatch emitter. For example, suppose you want to watch to make 
-sure that an apache process is running at all times. You could configure a ProcMetric to match
-the appropriate process configuration. Then, you'd add an __action__ to CloudWatch, and an 
-__alarm__ that executes that action when certain conditions on that metric are reached:
-
-	# For example, we support CloudWatch
-	CloudWatch:
-    namespace: ...
-    actions:
-        emailAdmin:
-            - {endpoint: my@email.com}
-    alarms:
-        serverDied:
-            description: Oh noes! Apache fell over!
-            metric: apache-count
-            threshold: 0
-            comparison: <=
-            alarm:
-                - emailAdmin
-            insufficient_data:
-                - emailAdmin
-
-	# Counts the number of apache processes
-	apache:
-		module: ProcMetric
-
-The CloudWatch Alarm API is perhaps a little complex, but we wanted our configuration to reflect
-it closely. You can provide the actions to take when the alarm is in the INSUFFICIENT\_DATA state,
-(which can be a good indication that either monitoring or the machine died), ALARM, and OK (which
-doesn't necessarily seem like a useful state, but it's available in the API). You can also include
-the dimensions across which you'd like to gather data, but we imagine you'd often like to watch
-on a per-instance basis.
-
-Twitter _[New]_
----------------
-
-We also support Twitter, mostly as a lark. It's kind of cludge-y -- you have to make a Twitter app,
-save the consumer key and consumer secret in the configuration file, and then once you've authorized
-the app, then save your account's access key and access secret for the app. Also, be aware that 
-__Twitter limits the number of posts a user can push to 1000 per day__, so if you have a lot of
-metrics to monitor, you have to sample very sparsely. One metric once a minute is already above that
-limit (1440 per day)
+* Sending to HTTP endpoints in JSON or XML
+* Making stats and graphs available through a campfire bot
+* Making stats and graphs available through Jabber
 
 Metrics
 =======
 
-Here's a brief rundown of the included metrics
+Metrics are python classes that know how to gather particular pieces of information, and
+then return those as a dictionary that is then sent to all the emitters configured. Like
+emitters, __metrics are easily extensible__, so if there's something you'd like to be able
+to monitor that you can access in python, you can write a little bit of python and track it!
+For more thorough documentation, see the metrics' README.md. Currently included metrics are:
 
-Disk
-----
-
-Can check up on disk free space, number of inodes in use, etc.
-
-LogMetric _[New]_
------------------
-
-"Tails" a log file that you specify to count the number of lines that match the provided
-regular expressions. Alternatively, you can use the _last_ group of the regular expression
-as a number, which is what will be returned. It remembers where it last read in the file
-(except between restarts), and continues reading from there. It knows when the file has
-been replaced (or more exactly, when the inode for the provided path changes). It only
-actually reads from the file when the modification time for the file changes (st\_mtime).
-For example, if you want to track the number of successes and failures listed in a log file:
-
-	myServiceLog:
-		module: LogMetric
-		path: /var/log/myService.log
-		success: ^Successfully fetched (\d+)
-		failure: failed$
-
-MySQL
------
-
-Runs 'SHOW STATUS' on mysql on the host provided, using the user and password provided.
-
-PingMetric
-----------
-
-Pings a url, with a configurable url, optional data string (should be url-encoded), and
-optional timeout. Returns the latency, with the assumption being that high failure leads
-to INSUFFICIENT\_DATA in CloudWatch
-
-PipeMetric _[New]_
-------------------
-
-Similar to "LogMetric," this "tails" a named pipe and matches each line against a set of
-provided regular expressions. The advantage of the PipeMetric is that if you don't intend
-to keep your files long-term, you can get performance boosts that come with using a named
-pipe instead of a file. If there isn't a fifo already created in the specified path, it will
-create one for you:
-
-	myServiceLog:
-		module: PipeMetric
-		path: /var/log/namedPipeMyService.log
-		success: ^Success
-		failure: failed$
-
-ProcMetric _[New]_
-------------------
-
-Some of the functionality provided in this metric is limited by the underlying OS, but it
-uses [psutil](http://code.google.com/p/psutil/) to try to get away from OS differences.
-Still, psutil is a work in progress, and doesn't have support for everything yet.
-
-ProcMetric actually lets you search for particular processes and get aggregate stats on all
-the processes that match. Typically, you'll want to limit it to a particular process (or
-perhaps the same processes repeated several times). Each filter is considered a regular
-expression, that matches if it is found anywhere in the corresponding process property:
-
-* __name__ - __Required__ The name of the process. For scripts, this is the name of the __interpreter__
-* __user__ - The username of the user running that process
-* __args__ - Args provided to the process when invoked. For scripts, includes the script name
-* __cwd__  - The current working directory of the running process
-
-This metric __always__ returns a count of the number of processes that match your description,
-and if processes match, it aggregates the following statistics (summing them up across all procs):
-
-* __user-cpu__ - Time spent in user (s)
-* __sys-spu__  - Time spend in sys (s)
-* __uptime__   - How long the process has been running (s)
-* __real-mem__ - Real memory consumption (MB)
-* __virt-mem__ - Virtual memory consumption (MB)
-* __percent-mem__ - Portion of total memory consumption (percent)
-* __children__ - Number of child processes (count)
-* __threads__  - Number of threads (count)
-* __files__    - Number of files it has open (count)
-* __connections__ - Number of TCP/UDP connections (count)
-
-You can specify the specific attributes you would like pushed, in case you
-don't want all of these cluttering your monitoring (and/or costing you money). To do so, just
-specify the 'keys' argument in the configuration file, as a list. By way of
-some examples, you might want to make sure that you always have a process 'myService' being
-run as user 'me', in the directory '/var/me'. And in this case, you're really just interested
-in how much memory it's using, as well as how many threads it has going at any one time:
-
-	myService:
-		module: ProcMetric
-		user: me
-		cwd: /var/me
-		keys:
-			- threads
-			- percent-mem
-			- real-mem
-
-ShellMetric
------------
-
-Executes a shell command that returns a number. __This is potentially dangerous, as it
-allows for injection attacks, so use at your own risk.__ To alleviate this risk, you can
-either run reporter.py under its own user, or just remove metrics/ShellMetric.py.
-Specify the command to run, and the units:
-
-	files:
-		module: ShellMetric
-		cmd: ls -lah | wc -l
-		units: Count
-
-SphinxMetric
-------------
-
-Tests the health of a sphinx instance by running 'SHOW STATUS' on the searchd instance.
-
-SystemMetric
-------------
-
-Meant to be general stats about the system, but currently just makes system-wide physical
-and virtual memory consumption available.
-
-Extensibility
-=============
-
-Each metric is expected to return a dictionary, containing at least one key,
-"results," which is another dictionary mapping names of statistics to a tuple
-of the value and units. Perhaps it's better to just show by example!
-
-	return { 'results' : {
-			'latency'   : (latency, 'Seconds'),
-			'something' : (value, 'Kilobytes')
-		}
-	}
-
-If you do extend the available metrics, inherit from the metric class, and implement
-the "values," function to return a dictionary in the above style. Optionally, 
-supply another key in that dictionary which is the time for which the data is
-valid. __Your metric "MyMetric" should be stored in metrics/MyMetric.py__
+* Disk metrics (track free space, free inodes, etc.)
+* Log metric (follows log files for lines that match regexes you provide)
+* __MySQL metric__ (track stats from `SHOW STATUS`)
+* __JSON ping metric__ (tracks the values of a json associative array reported by a HTTP endpoint)
+* Ping metric (pings a url and reports latency)
+* Pipe metric (identical to the log metric, except designed to work with named pipes)
+* __Proc metric__ (tracks stats associated with a specific process or set of processes)
+* __Redis metric__ (stats from `info` command, values in keys you specify, queue lengths, etc.)
+* S3Bucket metric (number and age of keys in a bucket)
+* __Shell metric__ (tracks the value returned by a specified shell command)
+* Sphinx metric (tracks statistics about a (Sphinx)[http://sphinxsearch.com/] index)
+* __System metric__ (information about the system as a whole, like memory consumption)
 
 Roadmap
 =======
