@@ -7,8 +7,6 @@ from boto.exception import BotoClientError
 from boto.s3.connection import S3Connection
 from sauron.metrics import Metric, MetricException
 
-logger = logging.getLogger('sauron')
-
 class S3BucketMetric(Metric):
 	def __init__(self, name, bucket, keys=None, **kwargs):
 		Metric.__init__(self, name, keys)
