@@ -13,25 +13,59 @@ DAEMON_OPTS=""
 
 export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
 
+# Test whether a process is running
+function running() {
+	local pid=$1
+	echo `ps -p $pid | grep $pid | wc -l`
+}
+
+function start() {
+	# If the pid file exists
+	if [ -e $PIDFILE ]; then
+		if [ $(running `cat $PIDFILE`) == "1" ]; then
+			echo "$NAME is already running with pid `cat $PIDFILE`"
+			exit 1
+		fi
+	fi
+	# In case we don't have permissions to write to /var/run/, let's fail early
+	echo "0" > $PIDFILE
+	# Start the thing, obviously
+	echo "Starting daemon: "$NAME
+	nohup $DAEMON $DAEMON_OPTS > /dev/null &
+	# Now save the pid to a file
+	echo $! > $PIDFILE
+}
+
+function stop() {
+	# And stop it
+	if [ -e $PIDFILE ]; then
+		while [ $(running `cat $PIDFILE`) ]; do
+			echo "Attempting to kill $NAME (`cat $PIDFILE`)"
+			kill `cat $PIDFILE`
+			sleep 1
+			if [ running `cat $PIDFILE` ]; then
+				sleep 5
+			else
+				echo "Stopped."
+			fi
+		done
+	fi
+}
+
 case "$1" in
 	start)
-		# Start the thing, obviously
-		echo -n "Starting daemon: "$NAME
-		start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE --background --exec $DAEMON -- $DAEMON_OPTS
-		echo "."
+		# Invoke the start function
+		start
 	;;
 	stop)
-		# And stop it
-		echo -n "Stopping daemon: "$NAME
-		start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
-		echo "."
+		# Invoke the stop function
+		stop
 	;;
 	restart)
-		# Restart it, though this shouldn't be needed
-		echo -n "Restarting daemon: "$NAME
-		start-stop-daemon --stop --quiet --oknodo --retry 30 --pidfile $PIDFILE
-		start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- $DAEMON_OPTS
-		echo "."
+		# First invoke the stop function
+		stop
+		# And then start it
+		start
 	;;
 	*)
 		# Didn't get any of the expected commands
