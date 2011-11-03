@@ -8,6 +8,10 @@ emitters:
         namespace: sauron
         # If you'd like, specify additional dimensions for grouping
         dimensions:
+            # If you'd like the instance ID to be automatically filled
+            # in, you can provide this key, without any value. Instead,
+            # to override it, you can instead provide a value.
+            InstanceId: 
             project: sauron
             name: dan
             role: crawler

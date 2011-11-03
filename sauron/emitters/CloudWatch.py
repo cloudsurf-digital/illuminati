@@ -1,4 +1,25 @@
 #! /usr/bin/env python
+# 
+# Copyright (c) 2011 SEOmoz
+# 
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import urllib2			# Need this to determine our instance ID
 import datetime
@@ -94,7 +115,13 @@ class CloudWatch(Emitter):
 	# Try to find the instance ID
 	def setInstanceId(self):
 		try:
-			self.dims['InstanceId'] = urllib2.urlopen('http://169.254.169.254/1.0/meta-data/instance-id', timeout=1.0).read().strip()
+			# This looks a little weird, but the idea is that if you would 
+			# to have the InstanceId automatically filled in, then simply
+			# add the key in the yaml file, but not the value. If you'd like
+			# to override it, then you can override it by providing a value.
+			# So, this covers the case that the key is provided, but no value
+			if not self.dims.get('InstanceId', True):
+				self.dims['InstanceId'] = urllib2.urlopen('http://169.254.169.254/1.0/meta-data/instance-id', timeout=1.0).read().strip()
 		except urllib2.URLError:
 			logger.warn('Failed to get an instance ID for this node from Amazon')
 	

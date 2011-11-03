@@ -8,7 +8,7 @@ NAME=sauron
 # Store the pid file in an appropriate place
 PIDFILE=/var/run/$NAME.pid
 # Run sauron, currently with no options
-DAEMON=saurond
+DAEMON=sauron-daemon
 DAEMON_OPTS=""
 
 export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
