@@ -10,7 +10,6 @@ setup(
 	author           = "Dan Lecocq",
 	author_email     = "dan@seomoz.org",
 	url              = "http://github.com/seomoz/sauron/",
-	download_url     = "http://chardet.feedparser.org/download/python3-chardet-1.0.1.tgz",
 	keywords         = ["monitoring", "cloudwatch"],
 	scripts          = ['bin/sauron-daemon', 'bin/sauron'],
 	classifiers      = [
