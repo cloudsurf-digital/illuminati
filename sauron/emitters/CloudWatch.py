@@ -31,10 +31,10 @@ from sauron.emitters import Emitter, EmitterException
 from boto.ec2.cloudwatch.listelement import ListElement
 
 class CloudWatch(Emitter):
-	def __init__(self, namespace, dimensions={}, alarms={}, actions={}):
+	def __init__(self, namespace, dimensions={}, alarms={}, actions={}, **kwargs):
 		super(CloudWatch,self).__init__()
 		self.namespace = namespace
-		self.conn = CloudWatchConnection()
+		self.conn = CloudWatchConnection(**kwargs)
 		# Set our dimensions, including instance ID
 		self.dims = dimensions
 		self.setInstanceId()
