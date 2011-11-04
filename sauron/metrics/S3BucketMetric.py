@@ -30,10 +30,11 @@ from sauron.metrics import Metric, MetricException
 
 class S3BucketMetric(Metric):
 	def __init__(self, name, bucket, keys=None, **kwargs):
-		Metric.__init__(self, name, keys)
+		Metric.__init__(self, name, keys, **kwargs)
 		self.reconfig(name, bucket, keys, **kwargs)
 
 	def reconfig(self, name, bucket, keys=None, **kwargs):
+		Metric.reconfig(self, name, **kwargs)
 		self.bucketName = bucket
 		self.prefix = kwargs.get('prefix', '')
 		try:

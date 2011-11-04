@@ -28,11 +28,12 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class MySQLMetric(Metric):
-	def __init__(self, name, host=None, user=None, passwd=None):
-		Metric.__init__(self, name)
+	def __init__(self, name, host=None, user=None, passwd=None, **kwargs):
+		Metric.__init__(self, name, **kwargs)
 		self.reconfig(name, host, user, passwd)
 	
-	def reconfig(self, name, host=None, user=None, passwd=None):
+	def reconfig(self, name, host=None, user=None, passwd=None, **kwargs):
+		Metric.reconfig(self, name, **kwargs)
 		self.name   = name
 		self.host   = host
 		self.user   = user

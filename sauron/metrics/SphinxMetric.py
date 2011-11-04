@@ -28,11 +28,12 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class SphinxMetric(Metric):
-	def __init__(self, name, host='127.0.0.1', port=9306):
-		Metric.__init__(self, name)
+	def __init__(self, name, host='127.0.0.1', port=9306, **kwargs):
+		Metric.__init__(self, name, **kwargs)
 		self.reconfig(name, host, port)
 	
-	def reconfig(self, name, host='127.0.0.1', port=9306):
+	def reconfig(self, name, host='127.0.0.1', port=9306, **kwargs):
+		Metric.reconfig(self, name, **kwargs)
 		self.host   = host
 		self.port   = port
 		self.conn   = None

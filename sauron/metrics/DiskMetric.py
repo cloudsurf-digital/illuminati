@@ -27,12 +27,12 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class DiskMetric(Metric):
-	def __init__(self, name, path, keys):
-		Metric.__init__(self, name, keys)
-		self.reconfig(name, path, keys)
+	def __init__(self, name, path, **kwargs):
+		Metric.__init__(self, name, **kwargs)
+		self.reconfig(name, path)
 	
-	def reconfig(self, name, path, keys):
-		Metric.reconfig(self, name, keys)
+	def reconfig(self, name, path):
+		Metric.reconfig(self, name, **kwargs)
 		self.path = path
 	
 	def values(self):

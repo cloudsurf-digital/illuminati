@@ -30,10 +30,11 @@ from sauron.metrics import Metric, MetricException
 
 class JSONPingMetric(Metric):
 	def __init__(self, name, **kwargs):
-		Metric.__init__(self, name)
+		Metric.__init__(self, name, **kwargs)
 		self.reconfig(name, **kwargs)
 	
-	def reconfig(self, name, url, post=None, timeout=30):
+	def reconfig(self, name, url, post=None, timeout=30, **kwargs):
+		Metric.reconfig(self, name, **kwargs)
 		self.name = name
 		self.url  = url
 		self.post = post

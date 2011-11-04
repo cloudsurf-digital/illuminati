@@ -27,11 +27,12 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class ShellMetric(Metric):
-	def __init__(self, name, cmd, units):
-		Metric.__init__(self, name)
+	def __init__(self, name, cmd, units, **kwargs):
+		Metric.__init__(self, name, **kwargs)
 		self.reconfig(name, cmd, units)
 	
-	def reconfig(self, name, cmd, units):
+	def reconfig(self, name, cmd, units, **kwargs):
+		Metric.reconfig(self, name, **kwargs)
 		self.cmd   = cmd
 		self.units = units
 	

@@ -31,10 +31,11 @@ from sauron.metrics import Metric, MetricException
 
 class ProcMetric(Metric):
 	def __init__(self, name, **kwargs):
-		Metric.__init__(self, name)
+		Metric.__init__(self, name, **kwargs)
 		self.reconfig(name, **kwargs)
 	
 	def reconfig(self, name, **kwargs):
+		Metric.reconfig(self, name, **kwargs)
 		self.kwargs = kwargs
 		self.kwargs['name'] = name
 		re.compile(name)

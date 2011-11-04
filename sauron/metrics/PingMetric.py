@@ -29,10 +29,11 @@ from sauron.metrics import Metric, MetricException
 
 class PingMetric(Metric):
 	def __init__(self, name, **kwargs):
-		Metric.__init__(self, name)
+		Metric.__init__(self, name, **kwargs)
 		self.reconfig(name, **kwargs)
 		
-	def reconfig(self, name, url, post=None, timeout=30):
+	def reconfig(self, name, url, post=None, timeout=30, **kwargs):
+		Metric.reconfig(self, name, **kwargs)
 		self.url  = url
 		self.post = post
 		self.timeout = timeout	

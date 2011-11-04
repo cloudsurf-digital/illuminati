@@ -39,7 +39,7 @@ class MetricException(Exception):
 		return str(self.msg)
 
 class Metric(object):
-	def __init__(self, name, keys=[]):
+	def __init__(self, name, keys=[], **kwargs):
 		Metric.reconfig(self, name, keys)
 	
 	def reconfig(self, name, keys=[]):
