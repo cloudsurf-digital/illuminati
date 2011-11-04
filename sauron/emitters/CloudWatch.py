@@ -32,7 +32,7 @@ from boto.ec2.cloudwatch.listelement import ListElement
 
 class CloudWatch(Emitter):
 	def __init__(self, namespace, dimensions={}, alarms={}, actions={}, **kwargs):
-		super(CloudWatch,self).__init__()
+		Emitter.__init__(self)
 		self.namespace = namespace
 		self.conn = CloudWatchConnection(**kwargs)
 		# Set our dimensions, including instance ID
@@ -40,6 +40,8 @@ class CloudWatch(Emitter):
 		self.setInstanceId()
 		# Make sure our actions exist...
 		self.actions = {}
+		# Store our AWS credential args for later
+		self.kwargs = kwargs
 		self.updateActions(actions)
 		# Now update our alarms
 		self.updateAlarms(alarms)
@@ -49,7 +51,7 @@ class CloudWatch(Emitter):
 		should a dictionary of Amazon Simple Notification Service topic names, and
 		their associated subscriptions.'''
 		# First, we need a SNS Connection to make this changes
-		conn = SNSConnection()
+		conn = SNSConnection(**self.kwargs)
 		# Now make sure each subscription is registered to the topic
 		for name, subscriptions in actions.items():
 			logger.info('Creating topic %s' % name)
