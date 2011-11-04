@@ -43,7 +43,7 @@ function stop() {
 			echo "Attempting to kill $NAME (`cat $PIDFILE`)"
 			kill `cat $PIDFILE`
 			sleep 1
-			if [ running `cat $PIDFILE` ]; then
+			if [ $(running `cat $PIDFILE`) == "1" ]; then
 				sleep 5
 			else
 				echo "Stopped."
