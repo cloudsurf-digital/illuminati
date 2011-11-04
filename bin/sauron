@@ -39,7 +39,7 @@ function start() {
 function stop() {
 	# And stop it
 	if [ -e $PIDFILE ]; then
-		while [ $(running `cat $PIDFILE`) ]; do
+		while [ $(running `cat $PIDFILE`) == "1" ]; do
 			echo "Attempting to kill $NAME (`cat $PIDFILE`)"
 			kill `cat $PIDFILE`
 			sleep 1
