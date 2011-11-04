@@ -42,7 +42,7 @@ class Metric(object):
 	def __init__(self, name, keys=[], **kwargs):
 		Metric.reconfig(self, name, keys)
 	
-	def reconfig(self, name, keys=[]):
+	def reconfig(self, name, keys=[], **kwargs):
 		self.name = name
 		self.keys = keys
 	
