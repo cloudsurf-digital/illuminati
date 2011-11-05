@@ -36,7 +36,7 @@ class CloudWatch(Emitter):
 		self.namespace = namespace
 		self.conn = CloudWatchConnection(**kwargs)
 		# Set our dimensions, including instance ID
-		self.dims = dimensions
+		self.dims = dimensions or {}
 		self.setInstanceId()
 		# Make sure our actions exist...
 		self.actions = {}
