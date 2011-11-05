@@ -122,7 +122,7 @@ class CloudWatch(Emitter):
 			# add the key in the yaml file, but not the value. If you'd like
 			# to override it, then you can override it by providing a value.
 			# So, this covers the case that the key is provided, but no value
-			if not self.dims.get('InstanceId', True):
+			if self.dims and not self.dims.get('InstanceId', True):
 				self.dims['InstanceId'] = urllib2.urlopen('http://169.254.169.254/1.0/meta-data/instance-id', timeout=1.0).read().strip()
 		except urllib2.URLError:
 			logger.warn('Failed to get an instance ID for this node from Amazon')
