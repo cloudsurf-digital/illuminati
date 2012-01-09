@@ -113,6 +113,10 @@ class RedisMetric(Metric):
 		self.hget   = kwargs.get('hget', {})
 		# The keys we should get and report the cardinality of
 		self.scard  = kwargs.get('scard', [])
+        # The keys we should get and report the zcardinality of
+        self.zcard  = kwargs.get('zcard', [])
+        # The patterns we should count the number of keys of
+        self.keys   = kwargs.get('keys', [])
 	
 	def values(self):
 		try:
@@ -130,6 +134,8 @@ class RedisMetric(Metric):
 			both.extend(self.hlen)
 			both.extend(['%s-%s' % (k, v) for k,v in self.hget.items()])
 			both.extend(self.scard)
+            both.extend(self.zcard)
+            both.extend(self.keys)
 			with self.redis.pipeline() as pipe:
 				for g in self.get:
 					pipe.get(g)
@@ -141,10 +147,19 @@ class RedisMetric(Metric):
 					pipe.hget(k, v)
 				for s in self.scard:
 					pipe.scard(s)
+                for z in self.zcard:
+                    pipe.zcard(z)
+                for pattern in self.keys:
+                    pipe.keys(pattern)
 				fetched = pipe.execute()
 				for index in range(len(fetched)):
-					results[both[index]] = (fetched[index], 'Count')
-
+                    k = both[index]
+                    f = fetched[index]
+                    if isinstance(f, list):
+                        results[k] = (len(f), 'Count')
+                    else:
+                        results[k] = (f, 'Count')
+            
 			return {'results': results}
 		except redis.RedisError as e:
 			raise MetricException(e)
