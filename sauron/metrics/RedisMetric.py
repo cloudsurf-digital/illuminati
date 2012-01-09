@@ -116,7 +116,7 @@ class RedisMetric(Metric):
         # The keys we should get and report the zcardinality of
         self.zcard  = kwargs.get('zcard', [])
         # The patterns we should count the number of keys of
-        self.keys   = kwargs.get('keys', [])
+        self.patterns = kwargs.get('patterns', [])
     
     def values(self):
         try:
@@ -135,7 +135,7 @@ class RedisMetric(Metric):
             both.extend(['%s-%s' % (k, v) for k,v in self.hget.items()])
             both.extend(self.scard)
             both.extend(self.zcard)
-            both.extend(self.keys)
+            both.extend(self.patterns)
             with self.redis.pipeline() as pipe:
                 for g in self.get:
                     logger.debug('get %s') % g
@@ -155,7 +155,7 @@ class RedisMetric(Metric):
                 for z in self.zcard:
                     logger.debug('zcard %s' % z)
                     pipe.zcard(z)
-                for pattern in self.keys:
+                for pattern in self.patterns:
                     logger.debug('keys %s' % pattern)
                     pipe.keys(pattern)
                 fetched = pipe.execute()
