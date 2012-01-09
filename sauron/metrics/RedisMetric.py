@@ -138,23 +138,28 @@ class RedisMetric(Metric):
             both.extend(self.keys)
             with self.redis.pipeline() as pipe:
                 for g in self.get:
+                    logger.debug('get %s') % g
                     pipe.get(g)
                 for l in self.llen:
+                    logger.debug('llen %s' % l)
                     pipe.llen(l)
                 for h in self.hlen:
+                    logger.debug('hlen %s' % h)
                     pipe.hlen(h)
                 for k,v in self.hget.items():
+                    logger.debug('hget %s %s' % (k, v))
                     pipe.hget(k, v)
                 for s in self.scard:
+                    logger.debug('scard %s' % s)
                     pipe.scard(s)
                 for z in self.zcard:
+                    logger.debug('zcard %s' % z)
                     pipe.zcard(z)
                 for pattern in self.keys:
+                    logger.debug('keys %s' % pattern)
                     pipe.keys(pattern)
                 fetched = pipe.execute()
-                for index in range(len(fetched)):
-                    k = both[index]
-                    f = fetched[index]
+                for k, f in zip(both, fetched):
                     if isinstance(f, list):
                         results[k] = (len(f), 'Count')
                     else:
