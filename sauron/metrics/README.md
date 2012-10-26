@@ -148,6 +148,21 @@ also keep track of stats in specific keys:
 	    scard:
 	        - myset
 
+RabbitMQMetric _[New]_
+-----------------------
+
+This metric can gather the statistics of queues you selected from RabbitMQ management
+plugin API. This statistics are mainly containing rate information of messaging like
+publishing, unacknowleged and all of messages. If you did not changed the settings of
+the management plugin, you don't need touch the settings of host, port, user and
+password. If you changed this, you have to set these settings by your self:
+
+    rabbitmq:
+        module: RabbitMQMetric
+        queues:
+            - first_queue
+            - second_queue
+
 S3BucketMetric _[New]_
 ----------------------
 
@@ -180,9 +195,9 @@ and virtual memory consumption available.
 Extensibility
 =============
 
-Each metric is instantiated with a name, and then all the options associated with it in 
+Each metric is instantiated with a name, and then all the options associated with it in
 the configuration file. Because sauron also re-reads the configuration files after they
-have changed, you must also implement a second method, `reconfig`, that can be called 
+have changed, you must also implement a second method, `reconfig`, that can be called
 repeatedly with different options without leaking resources or doing unnecessarily much
 work. For most metrics, this is relatively easy (taken from JSONPingMetric):
 
@@ -213,7 +228,7 @@ to track, and its units. Perhaps it's better to show by example:
 			}
 		}
 
-The only other constraint is that your metric __should catch all internal errors, and 
+The only other constraint is that your metric __should catch all internal errors, and
 raise a MetricException if it's a legitimate failure.__ Sauron won't fail otherwise,
 but it's considered the expected behavior. For examples, reference any of the included
 metrics.
