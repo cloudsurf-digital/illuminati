@@ -37,8 +37,6 @@ class ProcMetric(Metric):
     def reconfig(self, name, **kwargs):
         Metric.reconfig(self, name, **kwargs)
         self.kwargs = kwargs
-        self.kwargs['name'] = name
-        re.compile(name)
         for k in ['name', 'user', 'args', 'cwd']:
             try:
                 self.kwargs[k] = re.compile(self.kwargs[k])

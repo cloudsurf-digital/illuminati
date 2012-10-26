@@ -138,7 +138,7 @@ class RedisMetric(Metric):
             both.extend(self.patterns)
             with self.redis.pipeline() as pipe:
                 for g in self.get:
-                    logger.debug('get %s') % g
+                    logger.debug('get %s' % g)
                     pipe.get(g)
                 for l in self.llen:
                     logger.debug('llen %s' % l)

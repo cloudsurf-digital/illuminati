@@ -24,7 +24,8 @@ setup(
 		"boto >= 2.0",
 		"tweepy >= 1.7.1",
 		"httplib2 >= 0.7.1",
-		"argparse >= 1.2.1"
+		"argparse >= 1.2.1",
+		"twisted",
 	],
 	long_description = """\
 Sauron is meant to act as an all-seeing eye for pushing data to monitoring. It

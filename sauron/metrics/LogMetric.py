@@ -32,7 +32,7 @@ class LogMetric(Metric):
         self.reconfig(name, path, **kwargs)
     
     def reconfig(self, name, path, **kwargs):
-        Metric.reconfig(self, **kwargs)
+        Metric.reconfig(self, name, **kwargs)
         self.name = name
         self.patterns = dict([(k, re.compile(v)) for k,v in kwargs.items()])
         self.path = path
