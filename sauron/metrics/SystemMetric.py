@@ -40,9 +40,9 @@ class SystemMetric(Metric):
             return {'results': {
                     'physical': (phys.percent, 'Percent'),
                     'virtual' : (virt.percent, 'Percent'),
-                    'loadavg1': (loadavg1, 'Processes'),
-                    'loadavg5': (loadavg5, 'Processes'),
-                    'loadavg15': (loadavg15, 'Processes'),
+                    'loadavg1': (loadavg1, 'Count'),
+                    'loadavg5': (loadavg5, 'Count'),
+                    'loadavg15': (loadavg15, 'Count'),
                 }
             }
         except OSError as e:
