@@ -29,9 +29,9 @@ from sauron.metrics import Metric, MetricException
 class DiskMetric(Metric):
     def __init__(self, name, path, **kwargs):
         Metric.__init__(self, name, **kwargs)
-        self.reconfig(name, path)
+        self.reconfig(name, path, **kwargs)
     
-    def reconfig(self, name, path):
+    def reconfig(self, name, path, **kwargs):
         Metric.reconfig(self, name, **kwargs)
         self.path = path
     
@@ -52,6 +52,6 @@ class DiskMetric(Metric):
                     'inodes'    : (st.f_files, 'Count'),
                     'freeInodes': (st.f_ffree, 'Count')
             }
-            return {'results': dict((k, results[k]) for k in self.keys)}
+            return {'results': results}
         except Exception as e:
             raise MetricException(e)
