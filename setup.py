@@ -26,6 +26,7 @@ setup(
 		"httplib2 >= 0.7.1",
 		"argparse >= 1.2.1",
 		"twisted",
+		"redis",
 	],
 	long_description = """\
 Sauron is meant to act as an all-seeing eye for pushing data to monitoring. It
