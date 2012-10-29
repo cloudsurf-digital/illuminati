@@ -1,7 +1,7 @@
 #! /usr/bin/env python
-# 
+#
 # Copyright (c) 2011 SEOmoz
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
 # "Software"), to deal in the Software without restriction, including
@@ -9,10 +9,10 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -26,15 +26,15 @@ import datetime
 from sauron import logger
 from boto.sns import SNSConnection
 from boto.ec2.cloudwatch.alarm import MetricAlarm
-from boto.ec2.cloudwatch import CloudWatchConnection
+from boto.ec2.cloudwatch import connect_to_region
 from sauron.emitters import Emitter, EmitterException
 from boto.ec2.cloudwatch.listelement import ListElement
 
 class CloudWatch(Emitter):
-    def __init__(self, namespace, dimensions={}, alarms={}, actions={}, **kwargs):
+    def __init__(self, namespace, region_name='us-east-1', dimensions={}, alarms={}, actions={}, **kwargs):
         Emitter.__init__(self)
         self.namespace = namespace
-        self.conn = CloudWatchConnection(**kwargs)
+        self.conn = connect_to_region(region_name, **kwargs)
         # Set our dimensions, including instance ID
         self.dims = dimensions or {}
         self.setInstanceId()
@@ -61,7 +61,7 @@ class CloudWatch(Emitter):
                 self.actions[name] = arn
             except KeyError:
                 raise EmitterException('Bad response creating topic %s' % name)
-            
+
             if len(subscriptions) == 0:
                 raise EmitterException('No subscriptions for action %s' % name)
             # Now try to arrange for subscriptions
@@ -87,7 +87,7 @@ class CloudWatch(Emitter):
             activeUnlisted = set(current) - set([s['endpoint'] for s in subscriptions])
             for s in activeUnlisted:
                 logger.warn('Subscript "%s" active, but not listed in config' % s)
-    
+
     def updateAlarms(self, alarms):
         # Set up our alarms...
         for name, atts in alarms.items():
@@ -113,24 +113,24 @@ class CloudWatch(Emitter):
             a.insufficient_data_actions = ListElement(insufficient_data_actions)
             a.ok_actions = ListElement(ok_actions)
             self.conn.update_alarm(a)
-    
+
     # Try to find the instance ID
     def setInstanceId(self):
         try:
-            # This looks a little weird, but the idea is that if you would 
+            # This looks a little weird, but the idea is that if you would
             # to have the InstanceId automatically filled in, then simply
             # add the key in the yaml file, but not the value. If you'd like
             # to override it, then you can override it by providing a value.
             # So, this covers the case that the key is provided, but no value
-            if self.dims and not self.dims.get('InstanceId', True):
+            if not self.dims.get('InstanceId'):
                 self.dims['InstanceId'] = urllib2.urlopen('http://169.254.169.254/1.0/meta-data/instance-id', timeout=1.0).read().strip()
         except urllib2.URLError:
             logger.warn('Failed to get an instance ID for this node from Amazon')
-    
+
     def metrics(self, metrics):
         for name, results in metrics.items():
             for key,value in results['results'].items():
                 logger.info('Pushing %s-%s => %s' % (name, key, repr(value)))
                 v, u = value
                 self.conn.put_metric_data(self.namespace, name + '-' + key, unit=u, value=v, dimensions=self.dims)
-    
+
