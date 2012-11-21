@@ -108,7 +108,7 @@ class CloudWatch(Emitter):
                 atts['namespace'] = self.namespace
             except KeyError:
                 pass
-            a = MetricAlarm(name=name, **atts)
+            a = MetricAlarm(name=self.dims['InstanceId']+"-"+name, **atts)
             a.alarm_actions = alarm_actions
             a.insufficient_data_actions = ListElement(insufficient_data_actions)
             a.ok_actions = ListElement(ok_actions)
