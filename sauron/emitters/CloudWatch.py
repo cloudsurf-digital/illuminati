@@ -24,6 +24,7 @@
 import urllib2          # Need this to determine our instance ID
 import datetime
 from sauron import logger
+from boto.utils import get_instance_metadata
 from boto.sns import SNSConnection
 from boto.ec2.cloudwatch.alarm import MetricAlarm
 from boto.ec2.cloudwatch import connect_to_region
@@ -31,8 +32,10 @@ from sauron.emitters import Emitter, EmitterException
 from boto.ec2.cloudwatch.listelement import ListElement
 
 class CloudWatch(Emitter):
-    def __init__(self, namespace, region_name='us-east-1', dimensions={}, alarms={}, actions={}, **kwargs):
+    def __init__(self, namespace, region_name=None, dimensions={}, alarms={}, actions={}, **kwargs):
         Emitter.__init__(self)
+        if not region_name:
+          region_name = get_instance_metadata()['placement']['availability-zone'][:-1]
         self.namespace = namespace
         self.conn = connect_to_region(region_name, **kwargs)
         # Set our dimensions, including instance ID
