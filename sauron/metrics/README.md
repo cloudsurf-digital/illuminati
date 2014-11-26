@@ -192,6 +192,33 @@ SystemMetric
 Meant to be general stats about the system, but currently just makes system-wide physical
 and virtual memory consumption available.
 
+HttpdServerStatus
+------------
+
+###Describtion
+
+You can choose between the following data metrics from httpd server-status handler:
+ * CPULoad
+ * ReqPerSec
+ * BytesPerSec
+ * BusyWorkers
+ * IdleWorkers
+ * FreeClients
+
+The FreeClients Metric is a count of empty client slots (ServerLimit - Busyworkers)
+
+
+###Configuration Example
+
+sauron.yaml
+
+    apache:
+        module: HttpdServerStatus
+        url: http://localhost/server-status?auto
+        metrics: 
+         - FreeClients
+         - BusyWorkers
+
 Extensibility
 =============
 

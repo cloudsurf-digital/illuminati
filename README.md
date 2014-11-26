@@ -148,6 +148,7 @@ For more thorough documentation, see the metrics' README.md. Currently included 
 * __Shell metric__ (tracks the value returned by a specified shell command)
 * Sphinx metric (tracks statistics about a (Sphinx)[http://sphinxsearch.com/] index)
 * __System metric__ (information about the system as a whole, like memory consumption)
+* __HttpdServerStatus metric__ (information about the apache server-statzs handler)
 
 Roadmap
 =======
