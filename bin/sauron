@@ -1,72 +1,80 @@
-#! /bin/sh
+#!/bin/sh
+#
+# chkconfig: - 96 16
+# description: Aws cloudwatch daemon 
+# processname: None
+# config: None
+# pidfile: None
+
+# Source function library.
+. /etc/init.d/functions
+
+prog="sauron"
+lockfile="/var/lock/subsys/${prog}"
 
 # Exit if a single command fails
 set -e
 
 # Run as sauron
-NAME=sauron
 # Store the pid file in an appropriate place
-PIDFILE=/var/run/$NAME.pid
+PIDFILE="/var/run/${prog}.pid"
 # Run sauron, currently with no options
 DAEMON=sauron-daemon
 DAEMON_OPTS=""
 
 export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
 
-# Test whether a process is running
-function running() {
-	local pid=$1
-	echo `ps -p $pid | grep $pid | wc -l`
-}
 
 function start() {
-	# If the pid file exists
-	if [ -e $PIDFILE ]; then
-		if [ $(running `cat $PIDFILE`) == "1" ]; then
-			echo "$NAME is already running with pid `cat $PIDFILE`"
-			exit 1
-		fi
-	fi
-	# In case we don't have permissions to write to /var/run/, let's fail early
-	echo "0" > $PIDFILE
-	# Start the thing, obviously
-	echo "Starting daemon: "$NAME
-	nohup $DAEMON $DAEMON_OPTS > /dev/null &
-	# Now save the pid to a file
-	echo $! > $PIDFILE
+  # If the pid file exists
+  if [ -e $PIDFILE ]; then
+  	echo "$prog is already running with pid `cat $PIDFILE`"
+  	exit 1
+  fi
+  # In case we don't have permissions to write to /var/run/, let's fail early
+  echo "0" > $PIDFILE
+  # Start the thing, obviously
+  echo -n $"Starting $prog: "
+  nohup $DAEMON $DAEMON_OPTS > /dev/null 2>&1  &
+  RETREVAL=$?
+  echo $! > $PIDFILE
+  if [ $RETREVAL -eq 0 ]; then
+  	touch ${lockfile}
+  	echo_success
+  else
+  	echo_failure
+  	echo
+  	exit 2
+  fi
+  echo
 }
 
 function stop() {
-	# And stop it
-	if [ -e $PIDFILE ]; then
-		while [ $(running `cat $PIDFILE`) == "1" ]; do
-			echo "Attempting to kill $NAME (`cat $PIDFILE`)"
-			kill `cat $PIDFILE`
-			sleep 1
-			if [ $(running `cat $PIDFILE`) == "1" ]; then
-				sleep 5
-			else
-				echo "Stopped."
-			fi
-		done
-	fi
+  # And stop it
+  echo -n $"Stopping $prog: "
+  if [ -e $PIDFILE ]; then
+  	kill `cat $PIDFILE` && echo_success || echo_failure
+        rm -f ${lockfile}
+        rm -f ${PIDFILE}
+  fi
+  echo
 }
 
 case "$1" in
 	start)
 		# Invoke the start function
 		start
-	;;
+		;;
 	stop)
 		# Invoke the stop function
 		stop
-	;;
+		;;
 	restart)
 		# First invoke the stop function
 		stop
 		# And then start it
 		start
-	;;
+		;;
 	*)
 		# Didn't get any of the expected commands
 		echo "Usage: "$1" {start|stop|restart}"
@@ -74,3 +82,4 @@ case "$1" in
 esac
 
 exit 0
+
