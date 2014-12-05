@@ -17,6 +17,9 @@ Install with pip or easy\_install, or install from git:
 	# Or, installing from git
 	git clone git@github.com:seomoz/sauron.git
 	cd sauron && sudo python setup.py install
+        # or build rpm
+	git clone git@github.com:seomoz/sauron.git
+	cd sauron && sudo python setup.py bdist_rpm
 
 Running
 -------
