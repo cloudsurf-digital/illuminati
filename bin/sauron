@@ -31,13 +31,9 @@ function start() {
   	echo "$prog is already running with pid `cat $PIDFILE`"
   	exit 1
   fi
-  # In case we don't have permissions to write to /var/run/, let's fail early
-  echo "0" > $PIDFILE
   # Start the thing, obviously
   echo -n $"Starting $prog: "
   nohup $DAEMON $DAEMON_OPTS > /dev/null 2>&1  &
-  RETREVAL=$?
-  echo $! > $PIDFILE
   if [ $RETREVAL -eq 0 ]; then
   	touch ${lockfile}
   	echo_success

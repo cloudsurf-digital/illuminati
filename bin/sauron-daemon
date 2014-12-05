@@ -1,7 +1,14 @@
 #! /usr/bin/env python
 
+import os
 import argparse				# Options are good
 from sauron import Watcher	# Everything
+
+def writePidFile():
+  pid = str(os.getpid())
+  f = open('/var/run/sauron.pid', 'w')
+  f.write(pid)
+  f.close()
 
 parser = argparse.ArgumentParser(description='Monitoring daemon')
 parser.add_argument('--dry-run', dest='dryrun', action='store_true', default=False,
@@ -12,3 +19,4 @@ args = parser.parse_args()
 
 w = Watcher(dryrun=args.dryrun)
 w.start()
+writePidFile()
