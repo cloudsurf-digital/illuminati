@@ -12,9 +12,6 @@
 prog="sauron"
 lockfile="/var/lock/subsys/${prog}"
 
-# Exit if a single command fails
-set -e
-
 # Run as sauron
 # Store the pid file in an appropriate place
 PIDFILE="/var/run/${prog}.pid"
@@ -27,23 +24,28 @@ export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
 
 function start() {
   # If the pid file exists
-  if [ -e $PIDFILE ]; then
-    echo "$prog is already running with pid `cat $PIDFILE`"
-    exit 1
-  fi
-  # Start the thing, obviously
-  echo -n $"Starting $prog: "
-  nohup $DAEMON $DAEMON_OPTS > /dev/null 2>&1  &
-  # wait a second
-  sleep 1
-  if [ -e $PIDFILE ]; then
-    touch ${lockfile}
-    echo_success
-  else
+  if [ -e ${lockfile} ]; then
+    echo "$prog has lockfile, ill dont start twice!"
     echo_failure
-    exit 2
+  elif [ -e $PIDFILE ]; then
+    echo "$prog is already running with pid `cat $PIDFILE`"
+    echo_failure
+  else
+    # Start the thing, obviously
+    echo -n $"Starting $prog: "
+    nohup $DAEMON $DAEMON_OPTS > /dev/null 2>&1  &
+    # wait a second
+    sleep 1
+    if [ -e $PIDFILE ]; then
+      touch ${lockfile}
+      echo_success
+    else
+      echo_failure
+    fi
   fi
+  RETREVAL=$?
   echo
+  return $RETREVAL
 }
 
 function stop() {
@@ -54,7 +56,8 @@ function stop() {
     rm -f ${lockfile}
     rm -f ${PIDFILE}
   else
-    echo_sucess
+    echo -n "daemon is not running.."
+    echo_warning
   fi
   echo
 }
