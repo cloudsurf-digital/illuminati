@@ -18,5 +18,5 @@ parser.add_argument('--dry-run', dest='dryrun', action='store_true', default=Fal
 args = parser.parse_args()
 
 w = Watcher(dryrun=args.dryrun)
-w.start()
 writePidFile()
+w.start()

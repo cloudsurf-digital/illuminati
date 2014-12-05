@@ -28,19 +28,20 @@ export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
 function start() {
   # If the pid file exists
   if [ -e $PIDFILE ]; then
-  	echo "$prog is already running with pid `cat $PIDFILE`"
-  	exit 1
+    echo "$prog is already running with pid `cat $PIDFILE`"
+    exit 1
   fi
   # Start the thing, obviously
   echo -n $"Starting $prog: "
   nohup $DAEMON $DAEMON_OPTS > /dev/null 2>&1  &
-  if [ $RETREVAL -eq 0 ]; then
-  	touch ${lockfile}
-  	echo_success
+  # wait a second
+  sleep 1
+  if [ -e $PIDFILE ]; then
+    touch ${lockfile}
+    echo_success
   else
-  	echo_failure
-  	echo
-  	exit 2
+    echo_failure
+    exit 2
   fi
   echo
 }
@@ -49,33 +50,32 @@ function stop() {
   # And stop it
   echo -n $"Stopping $prog: "
   if [ -e $PIDFILE ]; then
-  	kill `cat $PIDFILE` && echo_success || echo_failure
-        rm -f ${lockfile}
-        rm -f ${PIDFILE}
+    kill `cat $PIDFILE` && echo_success || echo_failure
+    rm -f ${lockfile}
+    rm -f ${PIDFILE}
+  else
+    echo_sucess
   fi
   echo
 }
 
 case "$1" in
-	start)
-		# Invoke the start function
-		start
-		;;
-	stop)
-		# Invoke the stop function
-		stop
-		;;
-	restart)
-		# First invoke the stop function
-		stop
-		# And then start it
-		start
-		;;
-	*)
-		# Didn't get any of the expected commands
-		echo "Usage: "$1" {start|stop|restart}"
-		exit 1
+  start)
+    # Invoke the start function
+    start
+    ;;
+  stop)
+    # Invoke the stop function
+    stop
+    ;;
+  restart)
+    # First invoke the stop function
+    stop
+    # And then start it
+    start
+    ;;
+  *)
+    # Didn't get any of the expected commands
+    echo "Usage: "$1" {start|stop|restart}"
+    exit 1
 esac
-
-exit 0
-
