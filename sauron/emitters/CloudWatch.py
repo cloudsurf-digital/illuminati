@@ -21,7 +21,6 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import urllib2          # Need this to determine our instance ID
 import datetime
 from sauron import logger
 from boto.utils import get_instance_metadata
@@ -126,8 +125,8 @@ class CloudWatch(Emitter):
             # to override it, then you can override it by providing a value.
             # So, this covers the case that the key is provided, but no value
             if not self.dims.get('InstanceId'):
-                self.dims['InstanceId'] = urllib2.urlopen('http://169.254.169.254/1.0/meta-data/instance-id', timeout=1.0).read().strip()
-        except urllib2.URLError:
+                self.dims['InstanceId'] = boto.utils.get_instance_metadata()['instance-id']
+        except:
             logger.warn('Failed to get an instance ID for this node from Amazon')
 
     def metrics(self, metrics):
@@ -136,4 +135,8 @@ class CloudWatch(Emitter):
                 logger.info('Pushing %s-%s => %s' % (name, key, repr(value)))
                 v, u = value
                 self.conn.put_metric_data(self.namespace, name + '-' + key, unit=u, value=v, dimensions=self.dims)
+                # If Dimensions Provided make to calls to AWS one for the dimension only and one for instanceid included
+                if len(self.dims) > 1:
+                    self.dims.pop('InstanceId')
+                    self.conn.put_metric_data(self.namespace, "Aggregate-" + name + '-' + key, unit=u, value=v, dimensions=self.dims)
 
