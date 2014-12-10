@@ -82,18 +82,18 @@ class HttpdServerStatus(Metric):
 
   def calculate_req_per_second(self, total_httpd_access):
     current_access = int(total_httpd_access)
-    if myshelve.has_key('last_httpd_total_access'):
-      result = abs(current_access - myshelve['total_httpd_access'])
+    if self.tempdict.has_key('last_httpd_total_access'):
+      result = abs(current_access - self.tempdict['last_httpd_total_access'])
     else:
       result = current_access
-    myshelve['last_httpd_total_access'] = current_access
+    self.tempdict['last_httpd_total_access'] = current_access
     return str(result)
 
   def values(self):
     try:
       server_status = httplib2.Http() 
       response, content = server_status.request(self.url, 'GET')
-      result = dict([(metric, 0) for metric in self.serverstatus_metrics])
+      result = dict([(metric, (0, 'Count')) for metric in self.serverstatus_metrics])
       for line in content.splitlines():
         metricname, value = self.get_values_of_serverstatus(*line.split(':'))
         if value:
