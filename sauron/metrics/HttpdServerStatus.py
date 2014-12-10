@@ -41,10 +41,11 @@ class HttpdServerStatus(Metric):
     Metric.__init__(self, name, **kwargs)
     self.reconfig(name, url, **kwargs)
   
-  def reconfig(self, name, url, metrics, **kwargs):
+  def reconfig(self, name, url, metrics, interval='60', **kwargs):
     Metric.reconfig(self, name, **kwargs)
     self.name = name
     self.url = url
+    self.interval = interval
     if not isinstance(metrics, list):
       raise MetricException('metrics should be a list')
     self.serverstatus_metrics = metrics
@@ -83,7 +84,7 @@ class HttpdServerStatus(Metric):
   def calculate_req_per_second(self, total_httpd_access):
     current_access = int(total_httpd_access)
     if self.tempdict.has_key('last_httpd_total_access'):
-      result = abs(current_access - self.tempdict['last_httpd_total_access'])
+      result = abs(current_access - self.tempdict['last_httpd_total_access']) / self.interval
     else:
       result = current_access
     self.tempdict['last_httpd_total_access'] = current_access

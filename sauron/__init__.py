@@ -112,6 +112,7 @@ class Watcher(object):
                         c = getattr(m, module)
                         del d['module']
                         d['name'] = key
+                        d['interval'] = self.interval
                         self.metrics[key] = c(**d)
                 except KeyError:
                     logger.exception('No module listed for metric %s' % key)
