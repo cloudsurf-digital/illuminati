@@ -78,11 +78,11 @@ class HttpdServerStatus(Metric):
     value = value_mapper(serverstatus_key, value)
     if value.startswith('.'):
       value = '0' + value
-    value = float(value)
+    value = "%.3f" % (float(value))
     return metricname, value
 
   def calculate_req_per_second(self, total_httpd_access):
-    current_access = int(total_httpd_access)
+    current_access = float(total_httpd_access)
     if self.tempdict.has_key('last_httpd_total_access'):
       result = abs(current_access - self.tempdict['last_httpd_total_access']) / self.interval
     else:
