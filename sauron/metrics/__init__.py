@@ -24,6 +24,7 @@
 import os
 import sys
 from sauron import logger
+import shelve         # serializer on disk
 
 # Append our current path before this import
 p = os.path.dirname(os.path.abspath(__file__))
@@ -41,6 +42,7 @@ class MetricException(Exception):
 class Metric(object):
     def __init__(self, name, keys=[], **kwargs):
         Metric.reconfig(self, name, keys)
+        self.tempdict = self.load_cache()
     
     def reconfig(self, name, keys=[], **kwargs):
         self.name = name
@@ -66,3 +68,10 @@ class Metric(object):
                 'key': (0, 'Count')
             }, 'time': datetime.datetime.now()
         }
+
+    def load_cache(self):
+      """Load cache"""
+      myshelve = '/tmp/sauron.cache'
+      return shelve.open(myshelve, writeback=True)
+
+

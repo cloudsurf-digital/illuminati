@@ -29,21 +29,23 @@ from sauron.metrics import Metric, MetricException
 
 class HttpdServerStatus(Metric):
   AVAILABLE_METRICS_DATA = {
-    'CPULoad' : 'Count',
-    'ReqPerSec' : 'Count/Second',
-    'BytesPerSec': 'Bytes/Second',
-    'BusyWorkers': 'Count',
-    'IdleWorkers': 'Count',
-    'FreeClients': 'Count'
+    'CPULoad'          : 'Count',
+    'AvgReqPerSec'     : 'Count/Second',
+    'CurrentReqPerSec' : 'Count/Second',
+    'BytesPerSec'      : 'Bytes/Second',
+    'BusyWorkers'      : 'Count',
+    'IdleWorkers'      : 'Count',
+    'FreeClients'      : 'Count'
   }
   def __init__(self, name, url, **kwargs):
     Metric.__init__(self, name, **kwargs)
     self.reconfig(name, url, **kwargs)
   
-  def reconfig(self, name, url, metrics, **kwargs):
+  def reconfig(self, name, url, metrics, interval='60', **kwargs):
     Metric.reconfig(self, name, **kwargs)
     self.name = name
     self.url = url
+    self.interval = interval
     if not isinstance(metrics, list):
       raise MetricException('metrics should be a list')
     self.serverstatus_metrics = metrics
@@ -51,30 +53,52 @@ class HttpdServerStatus(Metric):
       try:
         assert HttpdServerStatus.AVAILABLE_METRICS_DATA.has_key(metric)
       except AssertionError:
-        raise MetricException('Metric is not available, choose out of %s' % (", ".join(self.serverstatus_metrics)))
+        raise MetricException('Metric is not available, choose out of %s' % (", ".join(HttpdServerStatus.AVAILABLE_METRICS_DATA.keys())))
     try:
       server_status = httplib2.Http() 
     except Exception as e:
       raise MetricException(e)
 
+
+  def count_freeclients(self, value):
+     return str(value.count('.'))
+
+  def get_values_of_serverstatus(self, serverstatus_key, value):
+    value = value.strip()
+    serverstatus_key = serverstatus_key.strip()
+    metricmap = {'Scoreboard'     : 'FreeClients',
+                 'ReqPerSec'      : 'AvgReqPerSec',
+                 'Total Accesses' : 'CurrentReqPerSec'}
+    valuemap  = {'Scoreboard'     : self.count_freeclients,
+                 'Total Accesses' : self.calculate_req_per_second}
+    metric_mapper = lambda x: metricmap[x] if metricmap.has_key(x) else x
+    metricname = metric_mapper(serverstatus_key)
+    if not metricname in self.serverstatus_metrics: return None, None
+    value_mapper = lambda x,y: valuemap[x](y) if valuemap.has_key(x) else y
+    value = value_mapper(serverstatus_key, value)
+    if value.startswith('.'):
+      value = '0' + value
+    value = "%.3f" % (float(value))
+    return metricname, value
+
+  def calculate_req_per_second(self, total_httpd_access):
+    current_access = float(total_httpd_access)
+    if self.tempdict.has_key('last_httpd_total_access'):
+      result = abs(current_access - self.tempdict['last_httpd_total_access']) / self.interval
+    else:
+      result = current_access
+    self.tempdict['last_httpd_total_access'] = current_access
+    return str(result)
+
   def values(self):
     try:
       server_status = httplib2.Http() 
       response, content = server_status.request(self.url, 'GET')
-      result = dict([(metric, 0) for metric in self.serverstatus_metrics])
+      result = dict([(metric, (0, 'Count')) for metric in self.serverstatus_metrics])
       for line in content.splitlines():
-        metricname, value = line.split(':')
-        if metricname == 'Scoreboard':
-          metricname = 'FreeClients'
-          value = str(value.count('.'))
-        value = value.strip()
-        if value.startswith('.'):
-          value = '0' + value
-        value = float(value)
-        for watched_metric in self.serverstatus_metrics:
-          if metricname == watched_metric:
-            result[watched_metric] = (value, HttpdServerStatus.AVAILABLE_METRICS_DATA[watched_metric])
-            
+        metricname, value = self.get_values_of_serverstatus(*line.split(':'))
+        if value:
+          result[metricname] = (value, HttpdServerStatus.AVAILABLE_METRICS_DATA[metricname])
       return {'results' : result }
     except Exception as e:
       raise MetricException(e)

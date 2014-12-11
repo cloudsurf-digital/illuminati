@@ -3,6 +3,14 @@
 import os
 import argparse				# Options are good
 from sauron import Watcher	# Everything
+import shelve         # serializer on disk
+
+global tempdict
+
+def load_cache():
+  """Load cache"""
+  myshelve = '/tmp/sauron.cache'
+  return shelve.open(myshelve, writeback=True)
 
 def writePidFile():
   pid = str(os.getpid())
@@ -17,6 +25,7 @@ parser.add_argument('--dry-run', dest='dryrun', action='store_true', default=Fal
 # Parse arguments, and then instantiate a watcher with those options
 args = parser.parse_args()
 
+tempdict = load_cache()
 w = Watcher(dryrun=args.dryrun)
 writePidFile()
 w.start()
