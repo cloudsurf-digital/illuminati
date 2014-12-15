@@ -135,8 +135,3 @@ class CloudWatch(Emitter):
                 logger.info('Pushing %s-%s => %s' % (name, key, repr(value)))
                 v, u = value
                 self.conn.put_metric_data(self.namespace, name + '-' + key, unit=u, value=v, dimensions=self.dims)
-                # If Dimensions Provided make to calls to AWS one for the dimension only and one for instanceid included
-                if len(self.dims) > 1:
-                    self.dims.pop('InstanceId')
-                    self.conn.put_metric_data(self.namespace, "Aggregate-" + name + '-' + key, unit=u, value=v, dimensions=self.dims)
-
