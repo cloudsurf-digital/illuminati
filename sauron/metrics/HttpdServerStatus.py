@@ -86,7 +86,7 @@ class HttpdServerStatus(Metric):
     if self.tempdict.has_key('last_httpd_total_access'):
       result = abs(current_access - self.tempdict['last_httpd_total_access']) / self.interval
     else:
-      result = current_access
+      result = 0
     self.tempdict['last_httpd_total_access'] = current_access
     return str(result)
 
