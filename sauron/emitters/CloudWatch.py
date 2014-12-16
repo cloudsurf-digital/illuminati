@@ -124,7 +124,7 @@ class CloudWatch(Emitter):
             # add the key in the yaml file, but not the value. If you'd like
             # to override it, then you can override it by providing a value.
             # So, this covers the case that the key is provided, but no value
-            if not self.dims.get('InstanceId'):
+            if not self.dims:
                 self.dims['InstanceId'] = get_instance_metadata()['instance-id']
         except:
             logger.warn('Failed to get an instance ID for this node from Amazon')
