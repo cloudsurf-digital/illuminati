@@ -83,7 +83,7 @@ class HttpdServerStatus(Metric):
 
   def calculate_req_per_second(self, total_httpd_access):
     current_access = float(total_httpd_access)
-    if self.tempdict.has_key('last_httpd_total_access'):
+    if self.tempdict.has_key('last_httpd_total_access') and current_access > self.tempdict['last_httpd_total_access']:
       result = abs(current_access - self.tempdict['last_httpd_total_access']) / self.interval
     else:
       result = 0
