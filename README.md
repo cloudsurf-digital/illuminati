@@ -17,9 +17,11 @@ Install with pip or easy\_install, or install from git:
 	# Or, installing from git
 	git clone git@github.com:seomoz/sauron.git
 	cd sauron && sudo python setup.py install
-        # or build rpm
-	git clone git@github.com:seomoz/sauron.git
-	cd sauron && sudo python setup.py bdist_rpm
+        # or build rpm on CentOs, AmazonLinux, Redhat
+	sudo yum group install "Development tools"
+	git clone https://github.com/johnny-die-tulpe/sauron.git
+	cd sauron && python setup.py bdist_rpm; cd -
+	sudo yum localinstall sauron/dist/sauron-*.noarch.rpm
 
 Running
 -------
