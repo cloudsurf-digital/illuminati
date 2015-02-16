@@ -86,7 +86,8 @@ class HttpdServerStatus(Metric):
     if self.tempdict.has_key('last_httpd_total_access') and current_access > self.tempdict['last_httpd_total_access']:
       result = abs(current_access - self.tempdict['last_httpd_total_access']) / self.interval
     else:
-      result = 0
+      # fallback to aggregated req per sec if no last_httpd_total_access value is available
+      result = self.serverstatus_result['ReqPerSec']
     self.tempdict['last_httpd_total_access'] = current_access
     return str(result)
 
@@ -95,8 +96,9 @@ class HttpdServerStatus(Metric):
       server_status = httplib2.Http() 
       response, content = server_status.request(self.url, 'GET')
       result = dict([(metric, (0, 'Count')) for metric in self.serverstatus_metrics])
-      for line in content.splitlines():
-        metricname, value = self.get_values_of_serverstatus(*line.split(':'))
+      self.serverstatus_result = dict([line.split(':') for line in content.splitlines()])
+      for k,v in self.serverstatus_result.iteritems():
+        metricname, value = self.get_values_of_serverstatus(k,v)
         if value:
           result[metricname] = (value, HttpdServerStatus.AVAILABLE_METRICS_DATA[metricname])
       return {'results' : result }
