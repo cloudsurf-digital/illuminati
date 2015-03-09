@@ -76,20 +76,26 @@ class HttpdServerStatus(Metric):
     if not metricname in self.serverstatus_metrics: return None, None
     value_mapper = lambda x,y: valuemap[x](y) if valuemap.has_key(x) else y
     value = value_mapper(serverstatus_key, value)
-    if value.startswith('.'):
-      value = '0' + value
-    value = "%.3f" % (float(value))
+    if value:
+      if str(value).startswith('.'):
+        value = '0' + value
+      value = "%.3f" % (float(value))
     return metricname, value
 
   def calculate_req_per_second(self, total_httpd_access):
     current_access = float(total_httpd_access)
-    if self.tempdict.has_key('last_httpd_total_access') and current_access > self.tempdict['last_httpd_total_access']:
-      result = abs(current_access - self.tempdict['last_httpd_total_access']) / self.interval
+    # only send results if uptime greater than 70 seconds
+    if int(self.serverstatus_result['Uptime']) > 70:
+      if self.tempdict.has_key('last_httpd_total_access') and current_access > self.tempdict['last_httpd_total_access']:
+        result = abs(current_access - self.tempdict['last_httpd_total_access']) / self.interval
+      else:
+        # fallback to aggregated req per sec if no last_httpd_total_access value is available
+        result = self.serverstatus_result['ReqPerSec']
     else:
-      # fallback to aggregated req per sec if no last_httpd_total_access value is available
-      result = self.serverstatus_result['ReqPerSec']
+      result = None
+
     self.tempdict['last_httpd_total_access'] = current_access
-    return str(result)
+    return result
 
   def values(self):
     try:
