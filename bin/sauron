@@ -62,7 +62,24 @@ function stop() {
   echo
 }
 
+function status() {
+  # show status
+  echo -n $"show status of $prog: "
+  if [ -e $PIDFILE ] && pgrep $prog > /dev/null 2>&1 ; then
+    echo -n "daemon is running"
+    echo_success
+  else
+    echo -n "daemon is not running.."
+    echo_warning
+  fi
+  echo
+}
+
 case "$1" in
+  status)
+    # Invoke the status function
+    status
+    ;;
   start)
     # Invoke the start function
     start
@@ -79,6 +96,6 @@ case "$1" in
     ;;
   *)
     # Didn't get any of the expected commands
-    echo "Usage: "$1" {start|stop|restart}"
+    echo "Usage: "$1" {start|stop|status|restart}"
     exit 1
 esac
