@@ -69,8 +69,8 @@ function status() {
     echo -n "daemon is running"
     echo_success
   else
-    echo -n "daemon is not running.."
-    echo_warning
+    echo "daemon is not running.."
+    exit 3
   fi
   echo
 }
