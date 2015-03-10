@@ -26,10 +26,10 @@ function start() {
   # If the pid file exists
   if [ -e ${lockfile} ]; then
     echo "$prog has lockfile, ill dont start twice!"
-    echo_failure
+    echo_success
   elif [ -e $PIDFILE ]; then
     echo "$prog is already running with pid `cat $PIDFILE`"
-    echo_failure
+    echo_success
   else
     # Start the thing, obviously
     echo -n $"Starting $prog: "
