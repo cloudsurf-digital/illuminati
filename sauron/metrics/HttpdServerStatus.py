@@ -87,10 +87,10 @@ class HttpdServerStatus(Metric):
     # only send results if uptime greater than 70 seconds
     if int(self.serverstatus_result['Uptime']) > 70:
       if self.tempdict.has_key('last_httpd_total_access') and current_access > self.tempdict['last_httpd_total_access']:
-        logger.info('no last state of total accesses or it\'s greater than current, falling back to apaches requests per seconds')
         result = abs(current_access - self.tempdict['last_httpd_total_access']) / self.interval
       else:
         # fallback to aggregated req per sec if no last_httpd_total_access value is available
+        logger.info('no last state of total accesses or it\'s greater than current, falling back to apaches requests per seconds')
         result = self.serverstatus_result['ReqPerSec']
     else:
       logger.info('uptime from webserver not enough (>70 seconds), still in warump phase, we dont send any data!')
