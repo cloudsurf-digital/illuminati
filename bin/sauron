@@ -17,68 +17,52 @@ lockfile="/var/lock/subsys/${prog}"
 PIDFILE="/var/run/${prog}.pid"
 # Run sauron, currently with no options
 DAEMON=sauron-daemon
-DAEMON_OPTS=""
+DAEMON_OPTS="--check ${prog}"
+RETVAL=0
 
-export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
+export PATH="${PATH}:/usr/sbin:/sbin:/usr/local/bin"
 
 
 function start() {
   # If the pid file exists
-  if [ -e ${lockfile} ]; then
-    echo "$prog has lockfile, ill dont start twice!"
-    echo_success
-  elif [ -e $PIDFILE ]; then
-    echo "$prog is already running with pid `cat $PIDFILE`"
-    echo_success
+  if [ -e $PIDFILE ]; then
+    checkpid `cat $PIDFILE`
   else
     # Start the thing, obviously
     echo -n $"Starting $prog: "
-    nohup $DAEMON $DAEMON_OPTS > /dev/null 2>&1  &
-    # wait a second
-    sleep 1
-    if [ -e $PIDFILE ]; then
-      touch ${lockfile}
-      echo_success
-    else
-      echo_failure
-    fi
+    daemon $DAEMON_OPTS  "$DAEMON > /dev/null 2>&1 &"
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
   fi
-  RETREVAL=$?
-  echo
-  return $RETREVAL
+  return $RETVAL
 }
 
 function stop() {
   # And stop it
   echo -n $"Stopping $prog: "
-  if [ -e $PIDFILE ]; then
-    kill `cat $PIDFILE` && echo_success || echo_failure
-    rm -f ${lockfile}
-    rm -f ${PIDFILE}
-  else
-    echo -n "daemon is not running.."
-    echo_warning
-  fi
+  killproc -p $PIDFILE $prog
+  RETVAL=$?
   echo
+  if [ $RETVAL -eq 0 ]; then
+    rm -f /var/lock/subsys/${prog}
+    rm -f /var/run/${prog}.pid
+  fi
+  return $RETVAL
 }
 
-function status() {
+function localstatus() {
   # show status
   echo -n $"show status of $prog: "
-  if [ -e $PIDFILE ] && pgrep $prog > /dev/null 2>&1 ; then
-    echo -n "daemon is running"
-    echo_success
-  else
-    echo "daemon is not running.."
-    exit 3
-  fi
-  echo
+  status -p $PIDFILE $prog
+  RETVAL=$?
+  return $RETVAL
 }
 
 case "$1" in
   status)
     # Invoke the status function
-    status
+    localstatus
     ;;
   start)
     # Invoke the start function
@@ -99,3 +83,5 @@ case "$1" in
     echo "Usage: "$1" {start|stop|status|restart}"
     exit 1
 esac
+
+exit $RETVAL
