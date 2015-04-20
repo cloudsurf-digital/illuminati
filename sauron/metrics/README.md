@@ -192,6 +192,17 @@ SystemMetric
 Meant to be general stats about the system, but currently just makes system-wide physical
 and virtual memory consumption available.
 
+TimeMetric
+-----------
+Very simple metric that will simple set a value of 1 between the start and end time.
+This can be used to work around Issues with Amazons Scheduled Scaling by creating 
+Cloudwatch Alarms based upon this metric.
+Sample:
+
+   module: TimeMetric
+   start: '12:00'
+   stop:  '13:00'
+
 HttpdServerStatus
 ------------
 
