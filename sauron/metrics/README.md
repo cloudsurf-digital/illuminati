@@ -199,9 +199,9 @@ This can be used to work around Issues with Amazons Scheduled Scaling by creatin
 Cloudwatch Alarms based upon this metric.
 Sample:
 
-   module: TimeMetric
-   start: '12:00'
-   stop:  '13:00'
+       module: TimeMetric
+       start: '12:00'
+       stop:  '13:00'
 
 HttpdServerStatus
 ------------
