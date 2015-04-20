@@ -51,7 +51,7 @@ class TimeMetric(Metric):
                val = 0
             return {'results' : { self.name : (val, 'Count') } }
         except:
-            raise
+            raise MetricException('failed to parse time')
 
 if __name__ == '__main__':
     m = TimeMetric('testing', '12:10', '20:05')
