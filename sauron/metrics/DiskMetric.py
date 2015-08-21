@@ -48,7 +48,7 @@ class DiskMetric(Metric):
                     'free'      : (round(free , 3), 'Gigabytes'),
                     'total'     : (round(total, 3), 'Gigabytes'),
                     'used'      : (round(used , 3), 'Gigabytes'),
-                    'percent'   : (round(float(used) / float(total), 3), 'Percent'),
+                    'percent'   : (round(float(used) / float(total), 3) * 100, 'Percent'),
                     'inodes'    : (st.f_files, 'Count'),
                     'free_inodes': (st.f_ffree, 'Count')
             }
