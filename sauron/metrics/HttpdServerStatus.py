@@ -104,7 +104,7 @@ class HttpdServerStatus(Metric):
       server_status = httplib2.Http() 
       response, content = server_status.request(self.url, 'GET')
       result = {}
-      self.serverstatus_result = dict([line.split(':') for line in content.splitlines()])
+      self.serverstatus_result = dict([line.split(': ') for line in content.splitlines() if ': ' in line])
       for k,v in self.serverstatus_result.iteritems():
         metricname, value = self.get_values_of_serverstatus(k,v)
         if value:
