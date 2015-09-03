@@ -47,5 +47,5 @@ class SystemMetric(Metric):
             }
         except OSError as e:
             raise MetricException(e)
-        except psutil.error.AccessDenied as e:
+        except psutil.AccessDenied as e:
             raise MetricException('Access denied in psutil')
