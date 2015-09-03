@@ -35,11 +35,11 @@ class SystemMetric(Metric):
             loadavg1, loadavg5, loadavg15 = 0, 0, 0
 
         try:
-            phys = psutil.phymem_usage()
-            virt = psutil.virtmem_usage()
+            phys = psutil.virtual_memory()
+            swap = psutil.swap_memory()
             return {'results': {
                     'physical': (phys.percent, 'Percent'),
-                    'virtual' : (virt.percent, 'Percent'),
+                    'swap': (swap.percent, 'Percent'),
                     'loadavg1': (loadavg1, 'Count'),
                     'loadavg5': (loadavg5, 'Count'),
                     'loadavg15': (loadavg15, 'Count'),
@@ -47,5 +47,5 @@ class SystemMetric(Metric):
             }
         except OSError as e:
             raise MetricException(e)
-        except psutil.error.AccessDenied as e:
+        except psutil.AccessDenied as e:
             raise MetricException('Access denied in psutil')
