@@ -163,11 +163,11 @@ class Watcher(object):
     def sample(self):
         # Try to re-read the configuration files
         self.readconfig()
-        logger.info('Reporting metrics...')
+        logger.debug('Reporting metrics...')
         results = {}
         # Aggregate all the metrics
         for m in self.metrics.values():
-            logger.info('Querying %s' % m.name)
+            logger.debug('Querying %s' % m.name)
             # Try to get values
             try:
                 results[m.name] = m.getValues()
