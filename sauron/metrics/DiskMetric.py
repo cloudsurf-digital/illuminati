@@ -45,12 +45,13 @@ class DiskMetric(Metric):
             total = (st.f_blocks * st.f_frsize) / divisor
             used  = (st.f_blocks - st.f_bavail) * st.f_frsize / divisor
             results = {
-                    'free'      : (round(free , 3), 'Gigabytes'),
-                    'total'     : (round(total, 3), 'Gigabytes'),
-                    'used'      : (round(used , 3), 'Gigabytes'),
-                    'percent'   : (round(float(used) / float(total), 3) * 100, 'Percent'),
-                    'inodes'    : (st.f_files, 'Count'),
-                    'free_inodes': (st.f_ffree, 'Count')
+                    'free'       : (round(free , 3), 'Gigabytes'),
+                    'total'      : (round(total, 3), 'Gigabytes'),
+                    'used'       : (round(used , 3), 'Gigabytes'),
+                    'percent'    : (round(float(used) / float(total), 3) * 100, 'Percent'),
+                    'inodes'     : (st.f_files, 'Count'),
+                    'ifree'      : (st.f_ffree, 'Count'),
+                    'iused_perc' : (round(float(st.f_files - st.f_ffree) / float(st.f_files), 3) * 100, 'Percent'),
             }
             return {'results': results}
         except Exception as e:
