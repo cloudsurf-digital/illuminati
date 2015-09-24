@@ -205,8 +205,8 @@ class Watcher(object):
           self.loopingCall.start(self.interval)
           reactor.addSystemEventTrigger('before', 'shutdown', self.stop)
           reactor.run()
-       except:
-         logger.exception('Error starting')
+        except:
+          logger.exception('Error starting')
     
     def stop(self):
       logger.info('Stopping watcher sampling!')
