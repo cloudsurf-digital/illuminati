@@ -39,11 +39,12 @@ class HttpdServerStatus(Metric):
   }
   def __init__(self, name, url, **kwargs):
     Metric.__init__(self, name, **kwargs)
-    self.reconfig(name, url, **kwargs)
+    self.reconfig(name, serializer, url, **kwargs)
   
-  def reconfig(self, name, url, metrics, interval='60', **kwargs):
+  def reconfig(self, name, serializer, url, metrics, interval='60', **kwargs):
     Metric.reconfig(self, name, **kwargs)
     self.name = name
+    self.serializer = serializer
     self.url = url
     self.interval = interval
     if not isinstance(metrics, list):
@@ -86,8 +87,8 @@ class HttpdServerStatus(Metric):
     current_access = float(total_httpd_access)
     # only send results if uptime greater than 70 seconds
     if int(self.serverstatus_result['Uptime']) > 70:
-      if self.tempdict.has_key('last_httpd_total_access') and current_access > self.tempdict['last_httpd_total_access']:
-        result = abs(current_access - self.tempdict['last_httpd_total_access']) / self.interval
+      if self.serializer.has_key('last_httpd_total_access') and current_access > self.serializer['last_httpd_total_access']:
+        result = abs(current_access - self.serializer['last_httpd_total_access']) / self.interval
       else:
         # fallback to aggregated req per sec if no last_httpd_total_access value is available
         logger.info('no last state of total accesses or it\'s greater than current, falling back to apaches requests per seconds')
@@ -96,7 +97,7 @@ class HttpdServerStatus(Metric):
       logger.info('uptime from webserver not enough (>70 seconds), still in warump phase, we dont send any data!')
       result = None
 
-    self.tempdict['last_httpd_total_access'] = current_access
+    self.serializer['last_httpd_total_access'] = current_access
     return result
 
   def values(self):
