@@ -57,9 +57,9 @@ class Watcher(object):
         self.dryrun    = dryrun
         self.loopingCall = None
         self.files = {'/etc/sauron.yaml':None, 'sauron.yaml':None}
-        self.readconfig()
         self.serializer_file = '/tmp/sauron.cache'
         self.serializer = shelve.open(self.serializer_file, writeback=True)
+        self.readconfig()
     
     def readconfig(self):
         data = {}
@@ -190,28 +190,29 @@ class Watcher(object):
         
     def get_serialized_data_for(self, key):
       if not self.serializer.has_key(key):
+        logger.debug('not serializer object for metric "%s"' % key)
         self.serializer[key] = dict()
       return self.serializer[key]
 
 
     def start(self):
-        if self.loopingCall:
-            logger.warn('Watcher::run called multiple times!')
-        else:
-            try:
-                self.loopingCall = LoopingCall(self.sample)
-                self.loopingCall.start(self.interval)
-                reactor.addSystemEventTrigger('before', 'shutdown', self.stop)
-                reactor.run()
-            except:
-                logger.exception('Error starting')
+      if self.loopingCall:
+        logger.warn('Watcher::run called multiple times!')
+      else:
+        try:
+          logger.info('Start watcher sampling!')
+          self.loopingCall = LoopingCall(self.sample)
+          self.loopingCall.start(self.interval)
+          reactor.addSystemEventTrigger('before', 'shutdown', self.stop)
+          reactor.run()
+       except:
+         logger.exception('Error starting')
     
     def stop(self):
-        logger.info('Stopping watcher sampling!')
-        try:
-            self.serializer.close()
-            self.loopingCall.stop()
-            self.loopingCall = None
-        except:
-            logger.exception('Error stopping')
-        
+      logger.info('Stopping watcher sampling!')
+      try:
+        self.serializer.close()
+        self.loopingCall.stop()
+        self.loopingCall = None
+      except:
+        logger.exception('Error stopping')

@@ -40,12 +40,12 @@ class MetricException(Exception):
 
 class Metric(object):
     def __init__(self, name, serializer, keys=[], **kwargs):
-        Metric.reconfig(self, name, keys)
+        Metric.reconfig(self, name, serializer, keys)
     
     def reconfig(self, name, serializer, keys=[], **kwargs):
         self.name = name
-        self.keys = keys
         self.serializer = serializer
+        self.keys = keys
     
     def getValues(self):
         if self.keys:
