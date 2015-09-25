@@ -30,12 +30,12 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class ProcMetric(Metric):
-    def __init__(self, name, **kwargs):
-        Metric.__init__(self, name, **kwargs)
-        self.reconfig(name, **kwargs)
+    def __init__(self, name, serializer, **kwargs):
+        Metric.__init__(self, name, serializer,  **kwargs)
+        self.reconfig(name, serializer, **kwargs)
     
-    def reconfig(self, name, **kwargs):
-        Metric.reconfig(self, name, **kwargs)
+    def reconfig(self, name, serializer, **kwargs):
+        Metric.reconfig(self, name, serializer,  **kwargs)
         self.kwargs = kwargs
         for k in ['name', 'user', 'args', 'cwd']:
             try:

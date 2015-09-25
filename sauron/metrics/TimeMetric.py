@@ -30,12 +30,12 @@ class TimeMetric(Metric):
     return 1 during the given timeframe. This can be used for self implementing
     scheduled autoscaling
     """
-    def __init__(self, name, start, stop, **kwargs):
-        Metric.__init__(self, name, **kwargs)
-        self.reconfig(name, start, stop)
+    def __init__(self, name, serializer, start, stop, **kwargs):
+        Metric.__init__(self, name, serializer, **kwargs)
+        self.reconfig(name, serializer, start, stop, **kwargs)
 
-    def reconfig(self, name, start, stop, **kwargs):
-        Metric.reconfig(self, name, **kwargs)
+    def reconfig(self, name, serialzier, start, stop, **kwargs):
+        Metric.reconfig(self, name, serialzier, **kwargs)
         self.start = start
         self.stop  = stop
 
