@@ -59,7 +59,8 @@ Emitter dependencies:
 * __boto__ Version 2.0+ is used for __CloudWatch__. That's the current release at
 time of writing, but if you have boto 1.9, you'll need to upgrade.
 * __tweepy__ is used for the __Twitter__ emitter.
-* __httplib2__ is used for the __HTTPEndpoint__ emitter.
+* __httplib2__ is used for the __HTTPEndpoint__ emitter, __NginxServerStatusMetric__ and
+__HttpdServerStatus metric__.
 
 Installing Dependencies
 -----------------------
@@ -153,7 +154,9 @@ For more thorough documentation, see the metrics' README.md. Currently included 
 * __Shell metric__ (tracks the value returned by a specified shell command)
 * Sphinx metric (tracks statistics about a (Sphinx)[http://sphinxsearch.com/] index)
 * __System metric__ (information about the system as a whole, like memory consumption)
-* __HttpdServerStatus metric__ (information about the apache server-statzs handler)
+* __HttpdServerStatus metric__ (information about the apache server-status handler)
+* __NginxServerStatusMetric__ (data from ngx_http_stub_status_module)
+
 
 Roadmap
 =======
