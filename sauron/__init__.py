@@ -25,7 +25,6 @@ import os               # We need to adjust our path
 import sys              # We need to append our current path
 import yaml             # Read the configuration file
 import time             # For sleeping
-import socket           # For getting the hostname, oddly enough
 import logging          # Log nicely
 import datetime         # For default times
 import shelve           # serializer on disk
@@ -36,12 +35,15 @@ logger.setLevel(logging.INFO)
 
 from metrics  import Metric,  MetricException
 from emitters import Emitter, EmitterException
+from utils import ExternalListenerFactory
 
 # We'll use twisted to be able to react to events,
 # and to call for logging periodically
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 
+socketfile = '/var/tmp/ext-sauron.sock'
+serializer_file = '/tmp/sauron.cache'
 formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] @ %(module)s:%(funcName)s : %(message)s')
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
@@ -57,7 +59,7 @@ class Watcher(object):
         self.dryrun    = dryrun
         self.loopingCall = None
         self.files = {'/etc/sauron.yaml':None, 'sauron.yaml':None}
-        self.serializer_file = '/tmp/sauron.cache'
+        self.serializer_file = serializer_file
         self.serializer = shelve.open(self.serializer_file, writeback=True)
         self.readconfig()
     
@@ -88,6 +90,7 @@ class Watcher(object):
         
     def reconfig(self, data):
         self.interval = int(data.get('interval', 60))
+        self.externalmeric_listner = data.get('metriclistener', False)
         if self.loghandler:
             logger.removeHandler(self.loghandler)
         fname = data.get('logfile', '/var/log/sauron.log')
@@ -203,6 +206,8 @@ class Watcher(object):
           logger.info('Start watcher sampling!')
           self.loopingCall = LoopingCall(self.sample)
           self.loopingCall.start(self.interval)
+          if self.externalmeric_listner:
+            reactor.listenUNIX(socketfile, ExternalListenerFactory())
           reactor.addSystemEventTrigger('before', 'shutdown', self.stop)
           reactor.run()
         except:
