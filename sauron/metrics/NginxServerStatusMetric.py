@@ -83,10 +83,13 @@ class NginxServerStatusMetric(Metric):
     return res 
 
   def values(self):
-    server_status = self.get_server_status(self.url)
-    server_status['CurrentReqPerSec'] = self.calculate_req_per_second(float(server_status['TotalHandledReq']))
-    res_keys = set(self.serverstatus_metrics).intersection(server_status.keys())
-    res = {}
-    for k in res_keys:
-      res[k] = (server_status[k], NginxServerStatusMetric.AVAILABLE_METRICS_DATA[k])
-    return {'results' : res }
+    try:
+      server_status = self.get_server_status(self.url)
+      server_status['CurrentReqPerSec'] = self.calculate_req_per_second(float(server_status['TotalHandledReq']))
+      res_keys = set(self.serverstatus_metrics).intersection(server_status.keys())
+      res = {}
+      for k in res_keys:
+        res[k] = (server_status[k], NginxServerStatusMetric.AVAILABLE_METRICS_DATA[k])
+      return {'results' : res }
+    except Exception as e:
+      raise MetricException(e)
