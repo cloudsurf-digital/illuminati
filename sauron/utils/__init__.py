@@ -25,27 +25,51 @@ from twisted.internet.protocol import ServerFactory, ClientFactory
 import jsonrpc2
 from sauron import logger
 
+unitlist = [
+      'Seconds',
+      'Bytes',
+      'Bits',
+      'Percent',
+      'Count',
+      'Bytes/Second',
+      'Bits/Second',
+      'Count/Second'
+]
+
 class ExernalMetricProtocol(jsonrpc2.JsonRPCProtocol): 
   def jsonrpc_echo(self,*args, **kwargs):
     largs = len(args)
-    logger.info(str(args))
     if largs == 1:
-      print self.factory.__class__.__name__,'receive:',args[0]
+      logger.debug('%s receive %s' % (str(self.factory.__class__.__name__), args[0]))
       return args[0]
     elif largs > 1:
-      print self.factory.__class__.__name__,'receive:',args
+      logger.debug('%s receive %s' % (str(self.factory.__class__.__name__), args))
       return args
-  def jsonrpc_bounce(self,*args):
-    print self.factory.__class__.__name__,'bounce'
+  def jsonrpc_bounce(self, *args):
     self.notifyRemote('echo',*args)
     largs = len(args)
     if largs == 1:
       return args[0]
     elif largs > 1:
       return args
-  def jsonrpc_add(self, value=None, name=None, unit='Count'):
-    logger.info("Received external metric: %s, with data: %s" % (str(name), str(value)))
+  def jsonrpc_addmetricdata(self, value=None, name=None, unit='Count'):
+    logger.debug("queueing external metric data: %s, with data: %s" % (str(name), str(value)))
+    if not unit in unitlist:
+      raise jsonrpc2.InvalidParams('Unit parameter is invalid, see AWS Cloudwatch docs')
+    if not value:
+      raise jsonrpc2.InvalidParams('A value parameter has to be provided')
+    if not name:
+      raise jsonrpc2.InvalidParams('A metricname has to be provided as \"name\" parameter')
+    try:
+      value = float(value)
+    except ValueError:
+      raise jsonrpc2.InvalidParams('Value has to be decimal')
+    self.factory.add_to_queue(name, value, unit)
     return "ok"
 
 class ExternalListenerFactory(ServerFactory):
   protocol = ExernalMetricProtocol
+  def __init__(self, queue):
+    self.queue = queue
+  def add_to_queue(self, *args):
+    self.queue.put(args)

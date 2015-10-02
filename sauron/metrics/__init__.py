@@ -68,3 +68,30 @@ class Metric(object):
             }, 'time': datetime.datetime.now()
         }
 
+class ExternalMetricQueueConsumer(Metric):
+  def __init__(self, name, serializer, queue, **kwargs):
+    Metric.__init__(self, name, serializer, **kwargs)
+    self.reconfig(name, serializer, queue, **kwargs)
+
+  def reconfig(self, name, serializer, queue, **kwargs):
+    Metric.reconfig(self, name, serializer, **kwargs)
+    self.queue = queue
+
+  def values(self):
+    try:
+      res = {}
+      while not self.queue.empty():
+        name, value, unit = self.queue.get(True, 1)
+        if res.has_key(name):
+          res[name][0] += value
+        else:
+          res[name] = [value, unit]
+        self.queue.task_done()
+
+      for k,v in res.iteritems():
+        res[k] = tuple(v)
+      if not res:
+        logger.info('No data from external metric listener received')
+      return {'results': res}
+    except Exception as e:
+      raise MetricException(e)
