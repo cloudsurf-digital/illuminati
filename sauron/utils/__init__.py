@@ -53,7 +53,7 @@ class ExernalMetricProtocol(jsonrpc2.JsonRPCProtocol):
       return args[0]
     elif largs > 1:
       return args
-  def jsonrpc_addmetricdata(self, value=None, name=None, unit='Count'):
+  def jsonrpc_adddata(self, value=None, name=None, unit='Count'):
     logger.debug("queueing external metric data: %s, with data: %s" % (str(name), str(value)))
     if not unit in unitlist:
       raise jsonrpc2.InvalidParams('Unit parameter is invalid, see AWS Cloudwatch docs')
