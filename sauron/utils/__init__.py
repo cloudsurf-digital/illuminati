@@ -69,7 +69,7 @@ class ExernalMetricProtocol(jsonrpc2.JsonRPCProtocol):
       self.factory.add_to_queue(name, value, unit)
     except Full:
       raise jsonrpc2.InternalError('metric queue is full, cannot put data into it!')
-    return "ok"
+    return "added"
 
 class ExternalListenerFactory(ServerFactory):
   protocol = ExernalMetricProtocol
