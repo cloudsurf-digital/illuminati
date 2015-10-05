@@ -38,7 +38,7 @@ class Response(Exception):
   def __init__(self,value=None):
     self.value = value
   def format(self,ctx):
-    return {'jsonrpc':'2.0','response':self.value,'id':ctx}
+    return {'jsonrpc':'2.0','result':self.value,'id':ctx}
 
 class ProtocolException(Exception):
   def __init__(self,code,message,data=None):
@@ -139,7 +139,7 @@ class JsonRPCProtocol(LineReceiver):
               raise PythonError(ex)
           if data_id is not False:
             raise Response(response)
-        elif 'response' in data:
+        elif 'result' in data:
           if 'error' in data or 'id' not in data:
             raise InvalidRequest()
           data_id = data['id']
@@ -148,9 +148,9 @@ class JsonRPCProtocol(LineReceiver):
             del self._deferred[data_id]
           except KeyError:
             return
-          deferred.callback(data['response'])
+          deferred.callback(data['result'])
         elif 'error' in data:
-          if 'response' in data or 'id' not in data:
+          if 'result' in data or 'id' not in data:
             raise InvalidRequest()
           data_id = data['id']
           try:
