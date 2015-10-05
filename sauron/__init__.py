@@ -25,7 +25,6 @@ import os               # We need to adjust our path
 import sys              # We need to append our current path
 import yaml             # Read the configuration file
 import time             # For sleeping
-import socket           # For getting the hostname, oddly enough
 import logging          # Log nicely
 import datetime         # For default times
 import shelve           # serializer on disk
@@ -34,15 +33,19 @@ import shelve           # serializer on disk
 logger = logging.getLogger('sauron')
 logger.setLevel(logging.INFO)
 
-from metrics  import Metric,  MetricException
+from metrics  import Metric,  MetricException, ExternalMetricQueueConsumer
 from emitters import Emitter, EmitterException
+from utils import ExternalListenerFactory
 
 # We'll use twisted to be able to react to events,
 # and to call for logging periodically
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
+from Queue import Queue
 
-formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] @ %(module)s:%(funcName)s : %(message)s')
+socketfile = '/var/tmp/ext-sauron.sock'
+serializer_file = '/tmp/sauron.cache'
+formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] %(funcName)s:%(message)s')
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
 handler.setLevel(logging.INFO)
@@ -57,7 +60,7 @@ class Watcher(object):
         self.dryrun    = dryrun
         self.loopingCall = None
         self.files = {'/etc/sauron.yaml':None, 'sauron.yaml':None}
-        self.serializer_file = '/tmp/sauron.cache'
+        self.serializer_file = serializer_file
         self.serializer = shelve.open(self.serializer_file, writeback=True)
         self.readconfig()
     
@@ -87,82 +90,88 @@ class Watcher(object):
             self.reconfig(data)
         
     def reconfig(self, data):
-        self.interval = int(data.get('interval', 60))
-        if self.loghandler:
-            logger.removeHandler(self.loghandler)
-        fname = data.get('logfile', '/var/log/sauron.log')
-        # Set up the logging file
-        self.loghandler = logging.FileHandler(fname, mode='a')
-        self.loghandler.setFormatter(formatter)
-        self.loghandler.setLevel(logging.INFO)
-        logger.addHandler(self.loghandler)
+      self.interval = int(data.get('interval', 60))
+      self.externalmetric_listner = data.get('metriclistener', False)
+      if self.loghandler:
+        logger.removeHandler(self.loghandler)
+      fname = data.get('logfile', '/var/log/sauron.log')
+      # Set up the logging file
+      self.loghandler = logging.FileHandler(fname, mode='a')
+      self.loghandler.setFormatter(formatter)
+      self.loghandler.setLevel(logging.INFO)
+      logger.addHandler(self.loghandler)
         
-        # Read in /all/ the metrics!
-        try:
-            if len(data['metrics']) == 0:
-                logger.error('No metrics in config file!')
-                exit(1)
-            for key,value in data['metrics'].items():
-                try:
-                    try:
-                        d = dict(value.items())
-                        self.metrics[key].reconfig(**d)
-                    except:
-                        module = value['module']
-                        m = __import__('sauron.metrics.%s' % module)
-                        m = getattr(m, 'metrics')
-                        m = getattr(m, module)
-                        c = getattr(m, module)
-                        del d['module']
-                        d['name'] = key
-                        d['serializer'] = self.get_serialized_data_for(key)
-                        d['interval'] = self.interval
-                        self.metrics[key] = c(**d)
-                except KeyError:
-                    logger.exception('No module listed for metric %s' % key)
-                    exit(1)
-                except ImportError:
-                    logger.exception('Unable to import module %s' % module)
-                    exit(1)
-                except TypeError as e:
-                    logger.exception('Unable to initialize metric %s' % key)
-                    exit(1)
-                except MetricException as e:
-                    logger.exception('Module Exception %s' % module)
-                    exit(1)
-        except KeyError:
-            logger.error('No metrics in config file!')
+      # Read in /all/ the metrics!
+      try:
+        if len(data['metrics']) == 0 and not self.externalmetric_listner:
+          logger.error('No metrics in config file!')
+          exit(1)
+        for key,value in data['metrics'].items():
+          try:
+            try:
+              d = dict(value.items())
+              self.metrics[key].reconfig(**d)
+            except:
+              module = value['module']
+              m = __import__('sauron.metrics.%s' % module)
+              m = getattr(m, 'metrics')
+              m = getattr(m, module)
+              c = getattr(m, module)
+              del d['module']
+              d['name'] = key
+              d['serializer'] = self.get_serialized_data_for(key)
+              d['interval'] = self.interval
+              self.metrics[key] = c(**d)
+          except KeyError:
+            logger.exception('No module listed for metric %s' % key)
             exit(1)
+          except ImportError:
+            logger.exception('Unable to import module %s' % module)
+            exit(1)
+          except TypeError as e:
+            logger.exception('Unable to initialize metric %s' % key)
+            exit(1)
+          except MetricException as e:
+            logger.exception('Module Exception %s' % module)
+            exit(1)
+        if self.externalmetric_listner:
+          ext_m = 'ExternalMetricQueueConsumer'
+          self.ext_q = Queue(maxsize=120000)
+          emqc = ExternalMetricQueueConsumer('rpc', self.get_serialized_data_for(ext_m), self.interval, self.ext_q)
+          self.metrics['rpc'] = emqc
+      except KeyError:
+        logger.error('No metrics in config file!')
+        exit(1)
         
-        # Read in /all/ the emitters!
-        try:
-            if self.dryrun:
-                logger.warn('Skipping all emitters because of --dry-run')
-                self.emitters[''] = Emitter()
-                return
-            if len(data['emitters']) == 0:
-                logger.error('No metrics in config file!')
-                exit(1)
-            for key,value in data['emitters'].items():
-                try:
-                    m = __import__('sauron.emitters.%s' % key)
-                    m = getattr(m, 'emitters')
-                    m = getattr(m, key)
-                    c = getattr(m, key)
-                    d = dict(value.items())
-                    self.emitters[key] = c(**d)
-                except ImportError:
-                    logger.exception('Unable to import module %s' % key)
-                    exit(1)
-                except TypeError as e:
-                    logger.exception('Unable to initialize emitter %s' % key)
-                    exit(1)
-                except EmitterException as e:
-                    logger.exception('Error with module %s' % module)
-                    exit(1)
-        except:
-            logger.exception('Emitter error!')
+      # Read in /all/ the emitters!
+      try:
+        if self.dryrun:
+          logger.warn('Skipping all emitters because of --dry-run')
+          self.emitters[''] = Emitter()
+          return
+        if len(data['emitters']) == 0:
+          logger.error('No metrics in config file!')
+          exit(1)
+        for key,value in data['emitters'].items():
+          try:
+            m = __import__('sauron.emitters.%s' % key)
+            m = getattr(m, 'emitters')
+            m = getattr(m, key)
+            c = getattr(m, key)
+            d = dict(value.items())
+            self.emitters[key] = c(**d)
+          except ImportError:
+            logger.exception('Unable to import module %s' % key)
             exit(1)
+          except TypeError as e:
+            logger.exception('Unable to initialize emitter %s' % key)
+            exit(1)
+          except EmitterException as e:
+            logger.exception('Error with module %s' % module)
+            exit(1)
+      except:
+        logger.exception('Emitter error!')
+        exit(1)
     
     def sample(self):
         # Try to re-read the configuration files
@@ -203,6 +212,9 @@ class Watcher(object):
           logger.info('Start watcher sampling!')
           self.loopingCall = LoopingCall(self.sample)
           self.loopingCall.start(self.interval)
+          if self.externalmetric_listner:
+            elf = ExternalListenerFactory(self.ext_q)
+            reactor.listenUNIX(socketfile, elf)
           reactor.addSystemEventTrigger('before', 'shutdown', self.stop)
           reactor.run()
         except:
