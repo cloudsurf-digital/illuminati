@@ -81,7 +81,7 @@ class ExternalMetricQueueConsumer(Metric):
     try:
       res = {}
       while not self.queue.empty():
-        name, value, unit = self.queue.get(True, 1)
+        name, value, unit = self.queue.get_nowait()
         if res.has_key(name):
           res[name][0] += value
         else:
@@ -89,6 +89,9 @@ class ExternalMetricQueueConsumer(Metric):
         self.queue.task_done()
 
       for k,v in res.iteritems():
+        if 'Second' in v[1]:
+          # argreate to value/s
+          v[0] = float(v[0] / self.interval)
         res[k] = tuple(v)
       if not res:
         logger.info('No data from external metric listener received')
