@@ -24,6 +24,7 @@
 from twisted.internet.protocol import ServerFactory, ClientFactory
 import jsonrpc2
 from sauron import logger
+from Queue import Queue.Full
 
 unitlist = [
       'Seconds',
@@ -64,7 +65,10 @@ class ExernalMetricProtocol(jsonrpc2.JsonRPCProtocol):
       value = float(value)
     except ValueError:
       raise jsonrpc2.InvalidParams('Value has to be decimal')
-    self.factory.add_to_queue(name, value, unit)
+    try:
+      self.factory.add_to_queue(name, value, unit)
+    except Queue.Full:
+      raise jsonrpc2.InternalError('metric queue is full, cannot put data into it!')
     return "ok"
 
 class ExternalListenerFactory(ServerFactory):
@@ -72,4 +76,4 @@ class ExternalListenerFactory(ServerFactory):
   def __init__(self, queue):
     self.queue = queue
   def add_to_queue(self, *args):
-    self.queue.put(args)
+    self.queue.put_nowait(args)
