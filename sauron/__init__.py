@@ -137,7 +137,7 @@ class Watcher(object):
         if self.externalmetric_listner:
           ext_m = 'ExternalMetricQueueConsumer'
           self.ext_q = Queue(maxsize=120000)
-          emqc = ExternalMetricQueueConsumer('rpc', self.get_serialized_data_for(ext_m), self.ext_q)
+          emqc = ExternalMetricQueueConsumer('rpc', self.get_serialized_data_for(ext_m), self.interval, self.ext_q)
           self.metrics['rpc'] = emqc
       except KeyError:
         logger.error('No metrics in config file!')

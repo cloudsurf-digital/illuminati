@@ -69,13 +69,14 @@ class Metric(object):
         }
 
 class ExternalMetricQueueConsumer(Metric):
-  def __init__(self, name, serializer, queue, **kwargs):
+  def __init__(self, name, serializer, interval, queue, **kwargs):
     Metric.__init__(self, name, serializer, **kwargs)
-    self.reconfig(name, serializer, queue, **kwargs)
+    self.reconfig(name, serializer, interval, queue, **kwargs)
 
-  def reconfig(self, name, serializer, queue, **kwargs):
+  def reconfig(self, name, serializer, interval, queue, **kwargs):
     Metric.reconfig(self, name, serializer, **kwargs)
     self.queue = queue
+    self.interval = interval
 
   def values(self):
     try:
