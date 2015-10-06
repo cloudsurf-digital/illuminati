@@ -150,7 +150,7 @@ class Watcher(object):
           self.emitters[''] = Emitter()
           return
         if len(data['emitters']) == 0:
-          logger.error('No metrics in config file!')
+          logger.error('No emitters in config file!')
           exit(1)
         for key,value in data['emitters'].items():
           try:
