@@ -34,8 +34,8 @@ class TimeMetric(Metric):
         Metric.__init__(self, name, serializer, **kwargs)
         self.reconfig(name, serializer, start, stop, **kwargs)
 
-    def reconfig(self, name, serialzier, start, stop, **kwargs):
-        Metric.reconfig(self, name, serialzier, **kwargs)
+    def reconfig(self, name, serializer, start, stop, **kwargs):
+        Metric.reconfig(self, name, serializer, **kwargs)
         self.start = start
         self.stop  = stop
 
