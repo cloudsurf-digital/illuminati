@@ -1,11 +1,12 @@
 import socket
+import random
 import json
 data = { 
       "jsonrpc": "2.0",
-      "method": "adddata",
+      "method": "put_avg_data",
       "params": {
-        "name": "websocket-msg",
-        "value": 1,
+        "name": "ws-msg",
+        "value": random.randint(5,400),
         "unit":  "Count"
       },  
       "id": 1

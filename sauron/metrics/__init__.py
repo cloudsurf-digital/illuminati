@@ -82,18 +82,21 @@ class ExternalMetricQueueConsumer(Metric):
     try:
       res = {}
       while not self.queue.empty():
-        name, value, unit = self.queue.get_nowait()
+        name, value, unit, method = self.queue.get_nowait()
         if res.has_key(name):
           res[name][0] += value
+          res[name][3] += 1
         else:
-          res[name] = [value, unit]
+          res[name] = [value, unit, method, 1]
         self.queue.task_done()
 
       for k,v in res.iteritems():
-        if 'Second' in v[1]:
+        if v[2] == 'persecond':
           # argreate to value/s
           v[0] = float(v[0] / self.interval)
-        res[k] = tuple(v)
+        elif v[2] == 'avg':
+          v[0] = float(v[0] / v[3])
+        res[k] = tuple([v[0], v[1]])
       if not res:
         logger.info('No data from external metric listener received')
       return {'results': res}

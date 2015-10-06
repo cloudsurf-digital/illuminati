@@ -53,8 +53,8 @@ class ExernalMetricProtocol(jsonrpc2.JsonRPCProtocol):
       return args[0]
     elif largs > 1:
       return args
-  def jsonrpc_adddata(self, value=None, name=None, unit='Count'):
-    logger.debug("queueing external metric data: %s, with data: %s" % (str(name), str(value)))
+  def _validate_incoming(self, value, name, unit):
+    logger.debug("validate external metric data")
     if not unit in unitlist:
       raise jsonrpc2.InvalidParams('Unit parameter is invalid, see AWS Cloudwatch docs')
     if not value:
@@ -65,10 +65,24 @@ class ExernalMetricProtocol(jsonrpc2.JsonRPCProtocol):
       value = float(value)
     except ValueError:
       raise jsonrpc2.InvalidParams('Value has to be decimal')
-    try:
-      self.factory.add_to_queue(name, value, unit)
-    except Full:
-      raise jsonrpc2.InternalError('metric queue is full, cannot put data into it!')
+    return value, name, unit
+
+  def jsonrpc_put_sum_data(self, value=None, name=None, unit='Count'):
+    value, name, unit = self._validate_incoming(value, name, unit)
+    method = 'sum'
+    self.factory.add_to_queue(name, value, unit, method)
+    return "added"
+
+  def jsonrpc_put_avg_data(self, value=None, name=None, unit='Count'):
+    value, name, unit = self._validate_incoming(value, name, unit)
+    method = 'avg'
+    self.factory.add_to_queue(name, value, unit, method)
+    return "added"
+
+  def jsonrpc_put_persec_data(self, value=None, name=None, unit='Count'):
+    value, name, unit = self._validate_incoming(value, name, unit)
+    method = 'persecond'
+    self.factory.add_to_queue(name, value, unit, method)
     return "added"
 
 class ExternalListenerFactory(ServerFactory):
@@ -76,5 +90,9 @@ class ExternalListenerFactory(ServerFactory):
   def __init__(self, queue):
     self.queue = queue
   def add_to_queue(self, *args):
-    if not self.queue.full():
-      self.queue.put_nowait(args)
+    try:
+      if not self.queue.full():
+        logger.debug("queueing external metric data: %s, with data: %s" % (args[0], str(args[1:4])))
+        self.queue.put_nowait(args)
+    except Full:
+      raise jsonrpc2.InternalError('metric queue is full, cannot put data into it!')
