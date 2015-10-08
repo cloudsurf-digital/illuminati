@@ -142,7 +142,7 @@ class Watcher(object):
             self.ext_q = Queue(maxsize=120000)
             emqc = ExternalMetricQueueConsumer('rpc', self.get_serialized_data_for(ext_m), self.interval, self.ext_q)
             self.metrics['rpc'] = emqc
-            self = ExternalListenerFactory(self.ext_q)
+            elf = ExternalListenerFactory(self.ext_q)
             self.listener = reactor.listenUNIX(socketfile, elf)
 
       except KeyError:
