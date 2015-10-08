@@ -143,6 +143,7 @@ class Watcher(object):
             emqc = ExternalMetricQueueConsumer('rpc', self.get_serialized_data_for(ext_m), self.interval, self.ext_q)
             self.metrics['rpc'] = emqc
             elf = ExternalListenerFactory(self.ext_q)
+            self.socket_remove()
             self.listener = reactor.listenUNIX(socketfile, elf)
 
       except KeyError:
@@ -209,6 +210,11 @@ class Watcher(object):
         self.serializer[key] = dict()
       return self.serializer[key]
 
+    def socket_remove(self):
+      try:
+        os.unlink(socketfile)
+      except OSError:
+        pass
 
     def start(self):
       if self.loopingCall:
@@ -230,6 +236,7 @@ class Watcher(object):
         self.loopingCall.stop()
         if self.listener:
           self.listener.stopListening()
+          self.socket_remove()
           self.listener = None
         self.loopingCall = None
       except:
