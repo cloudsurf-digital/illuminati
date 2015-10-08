@@ -89,7 +89,8 @@ class NginxServerStatusMetric(Metric):
       res_keys = set(self.serverstatus_metrics).intersection(server_status.keys())
       res = {}
       for k in res_keys:
-        res[k] = (server_status[k], NginxServerStatusMetric.AVAILABLE_METRICS_DATA[k])
+        if server_status[k]:
+          res[k] = (server_status[k], NginxServerStatusMetric.AVAILABLE_METRICS_DATA[k])
       return {'results' : res }
     except Exception as e:
       raise MetricException(e)
