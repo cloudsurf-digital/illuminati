@@ -5,7 +5,7 @@ from setuptools import setup
 setup(
   name             = "sauron",
   packages         = ["sauron", "sauron.metrics", "sauron.emitters", "sauron.utils"],
-  version          = "0.2.1",
+  version          = "0.2.2",
   description      = "An eye for monitoring, and pushing monitoring data",
   author           = "Dan Lecocq",
   author_email     = "dan@seomoz.org",
