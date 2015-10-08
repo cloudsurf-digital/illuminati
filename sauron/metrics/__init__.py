@@ -31,42 +31,47 @@ if p not in sys.path:
     sys.path.insert(0, p)
 
 class MetricException(Exception):
-    def __init__(self, message):
-        self.msg = message
-    def __repr__(self):
-        return repr(self.msg)
-    def __str__(self):
-        return str(self.msg)
+  def __init__(self, message):
+    self.msg = message
+  def __repr__(self):
+    return repr(self.msg)
+  def __str__(self):
+    return str(self.msg)
 
 class Metric(object):
-    def __init__(self, name, serializer, keys=[], **kwargs):
-        Metric.reconfig(self, name, serializer, keys)
+  def __init__(self, name, serializer, interval, *args, **kwargs):
+    self.name = name
+    self.serializer = serializer
+    self.interval = interval
+    self.keys = []
+    Metric.reconfig(self, *args, **kwargs)
     
-    def reconfig(self, name, serializer, keys=[], **kwargs):
-        self.name = name
-        self.serializer = serializer
-        self.keys = keys
+  def reconfig(self, **kwargs):
+    '''for each unknown keyword argument make it available in self context'''
+    for k in kwargs.keys():
+      self.__setattr__(k, kwargs[k])
+
+  def getValues(self):
+    if self.keys:
+      results = self.values()
+      pruned = {}
+      for k in self.keys:
+        try:
+          pruned[k] = results['results'][k]
+        except KeyError:
+          logger.warn('Key %s unavailable' % k)
+      results['results'] = pruned
+      return results
+    else:
+      return self.values()
     
-    def getValues(self):
-        if self.keys:
-            results = self.values()
-            pruned = {}
-            for k in self.keys:
-                try:
-                    pruned[k] = results['results'][k]
-                except KeyError:
-                    logger.warn('Key %s unavailable' % k)
-            results['results'] = pruned
-            return results
-        else:
-            return self.values()
-    
-    def values(self):
-        return {
-            'results': {
-                'key': (0, 'Count')
-            }, 'time': datetime.datetime.now()
-        }
+  def values(self):
+    return {
+      'results': {
+        'key': (0, 'Count')
+      },
+      'time': datetime.datetime.now()
+    }
 
 class ExternalMetricQueueConsumer(Metric):
   def __init__(self, name, serializer, interval, queue, **kwargs):

@@ -26,6 +26,20 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class RedisMetric(Metric):
+  ''' 
+  Pls refer to https://pypi.python.org/pypi/redis for argument which should be provided
+
+  Attributes:
+     host (string): https://pypi.python.org/pypi/redis
+     port (int): ()
+     db (string):
+     password (string):
+     charset (string):
+     errors (string):
+     unix_socket_path (string):
+  '''
+
+
     @staticmethod
     def parseMemory(x):
         try:
@@ -85,12 +99,7 @@ class RedisMetric(Metric):
         'aof_pending_rewrite'       : lambda x: (x, 'None'),
     }
 
-    def __init__(self, name, **kwargs):
-        Metric.__init__(self, name, **kwargs)
-        self.reconfig(name, **kwargs)
-    
-    def reconfig(self, name, **kwargs):
-        Metric.reconfig(self, name, **kwargs)
+    def reconfig(self, **kwargs):
         # These are a selection of argument names. If they're
         # present, then we'll use them, otherwise, we'll use 
         # the default provided by the redis module itself

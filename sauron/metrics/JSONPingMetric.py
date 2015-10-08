@@ -29,34 +29,38 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class JSONPingMetric(Metric):
-    def __init__(self, name, **kwargs):
-        Metric.__init__(self, name, **kwargs)
-        self.reconfig(name, **kwargs)
+  ''' 
+  This Metric tries to get the provided url to apache server-status module
+  and extracts the wanted metric data
+
+  Attributes:
+     url (string): should be an url like http://myapiendpoint/ to the apache endpoint of 
+       the server-status module in machinereadable form (auto)
+     metrics (list): a list out of class constant AVAILABLE_METRICS_DATA.keys()
+
+  '''
+  def reconfig(self, name, url, **kwargs):
+    '''parameters: url, [ post={}, timeout=30 ]'''
+    Metric.reconfig(self, **kwargs)
+    self.url = url
     
-    def reconfig(self, name, url, post=None, timeout=30, **kwargs):
-        Metric.reconfig(self, name, **kwargs)
-        self.name = name
-        self.url  = url
-        self.post = post
-        self.timeout = timeout
-    
-    def values(self):
-        start = datetime.datetime.now()
-        results = {}
-        try:
-            results = json.loads(urllib2.urlopen(self.url, self.post).read())
-            results = dict((k,(v, 'Count')) for k,v in results.items())
-        except json.decoder.JSONDecodeError as e:
-            raise MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
-        except urllib2.HTTPError as e:
-            raise MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
-        except IOError as e:
-            raise MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
-        # Some systems are stupid, and don't have total_seconds
-        try:
-            results['latency'] = ((datetime.datetime.now() - start).total_seconds(), 'Seconds')
-        except AttributeError:
-            results['latency'] = ((datetime.datetime.now() - start).seconds, 'Seconds')
-        return {
-            'results': results
-        }
+  def values(self):
+    start = datetime.datetime.now()
+    results = {}
+    try:
+      results = json.loads(urllib2.urlopen(self.url, self.post).read())
+      results = dict((k,(v, 'Count')) for k,v in results.items())
+    except json.decoder.JSONDecodeError as e:
+      raise MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
+    except urllib2.HTTPError as e:
+      raise MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
+    except IOError as e:
+      raise MetricException('Failed to fetch %s : %s' % (self.url, repr(e)))
+    # Some systems are stupid, and don't have total_seconds
+    try:
+      results['latency'] = ((datetime.datetime.now() - start).total_seconds(), 'Seconds')
+    except AttributeError:
+      results['latency'] = ((datetime.datetime.now() - start).seconds, 'Seconds')
+    return {
+      'results': results
+    }

@@ -39,14 +39,9 @@ class NginxServerStatusMetric(Metric):
     'ClientWrite'      : 'Count',
     'IdleKeepalive'    : 'Count'
   }
-  def __init__(self, name, serializer, url, **kwargs):
-    Metric.__init__(self, name, serializer, **kwargs)
-    self.reconfig(name, serializer, url, **kwargs)
-  
-  def reconfig(self, name, serializer, url, metrics, interval='60', **kwargs):
-    Metric.reconfig(self, name, serializer, **kwargs)
+  def reconfig(self, url, metrics, **kwargs):
+    Metric.reconfig(self, **kwargs)
     self.url = url
-    self.interval = interval
     if not isinstance(metrics, list):
       raise MetricException('metrics should be a list')
     self.serverstatus_metrics = metrics

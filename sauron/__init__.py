@@ -105,7 +105,7 @@ class Watcher(object):
       try:
         if len(config['metrics']) == 0 and not self.externalmetric_listner:
           logger.error('No metrics in config file!')
-          exit(1)
+          sys.exit(1)
         for key,value in config['metrics'].items():
           try:
             try:
@@ -124,16 +124,16 @@ class Watcher(object):
               self.metrics[key] = c(**d)
           except KeyError:
             logger.exception('No module listed for metric %s' % key)
-            exit(1)
+            sys.exit(1)
           except ImportError:
             logger.exception('Unable to import module %s' % module)
-            exit(1)
+            sys.exit(1)
           except TypeError as e:
             logger.exception('Unable to initialize metric %s' % key)
-            exit(1)
+            sys.exit(1)
           except MetricException as e:
             logger.exception('Module Exception %s' % module)
-            exit(1)
+            sys.exit(1)
         if self.externalmetric_listner:
           ext_m = 'ExternalMetricQueueConsumer'
           self.ext_q = Queue(maxsize=120000)
@@ -141,7 +141,7 @@ class Watcher(object):
           self.metrics['rpc'] = emqc
       except KeyError:
         logger.error('No metrics in config file!')
-        exit(1)
+        sys.exit(1)
         
       # Read in /all/ the emitters!
       try:
@@ -151,7 +151,7 @@ class Watcher(object):
           return
         if len(config['emitters']) == 0:
           logger.error('No emitters in config file!')
-          exit(1)
+          sys.exit(1)
         for key,value in config['emitters'].items():
           try:
             m = __import__('sauron.emitters.%s' % key)
@@ -162,16 +162,16 @@ class Watcher(object):
             self.emitters[key] = c(**d)
           except ImportError:
             logger.exception('Unable to import module %s' % key)
-            exit(1)
+            sys.exit(1)
           except TypeError as e:
             logger.exception('Unable to initialize emitter %s' % key)
-            exit(1)
+            sys.exit(1)
           except EmitterException as e:
             logger.exception('Error with module %s' % module)
-            exit(1)
+            sys.exit(1)
       except:
         logger.exception('Emitter error!')
-        exit(1)
+        sys.exit(1)
     
     def sample(self):
         # Try to re-read the configuration files

@@ -28,6 +28,16 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class HttpdServerStatus(Metric):
+  '''
+  This Metric tries to get the provided url to apache server-status module
+  and extracts the wanted metric data
+
+  Attributes:
+     url (string): should be an url like http://localhost/server-status?auto to the apache endpoint of 
+       the server-status module in machinereadable form (auto)
+     metrics (list): a list out of class constant AVAILABLE_METRICS_DATA.keys()
+
+  '''
   AVAILABLE_METRICS_DATA = {
     'CPULoad'          : 'Count',
     'AvgReqPerSec'     : 'Count/Second',
@@ -37,14 +47,9 @@ class HttpdServerStatus(Metric):
     'IdleWorkers'      : 'Count',
     'FreeClients'      : 'Count'
   }
-  def __init__(self, name, serializer, url, **kwargs):
-    Metric.__init__(self, name, serializer, **kwargs)
-    self.reconfig(name, serializer, url, **kwargs)
-  
-  def reconfig(self, name, serializer, url, metrics, interval='60', **kwargs):
-    Metric.reconfig(self, name, serializer, **kwargs)
+  def reconfig(self, url, **kwargs):
+    Metric.reconfig(self, **kwargs)
     self.url = url
-    self.interval = interval
     if not isinstance(metrics, list):
       raise MetricException('metrics should be a list')
     self.serverstatus_metrics = metrics
