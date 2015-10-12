@@ -1,4 +1,7 @@
 *.pyc
 *.log
 sauron.yaml
+build/
+dist/
+sauron.egg-info/
 
