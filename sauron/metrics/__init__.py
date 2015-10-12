@@ -44,9 +44,9 @@ class Metric(object):
     self.serializer = serializer
     self.interval = interval
     self.keys = []
-    Metric.reconfig(self, *args, **kwargs)
+    self.reconfig(self, *args, **kwargs)
     
-  def reconfig(self, **kwargs):
+  def reconfig(self, *args, **kwargs):
     '''for each unknown keyword argument make it available in self context'''
     for k in kwargs.keys():
       self.__setattr__(k, kwargs[k])
@@ -74,15 +74,6 @@ class Metric(object):
     }
 
 class ExternalMetricQueueConsumer(Metric):
-  def __init__(self, name, serializer, interval, queue, **kwargs):
-    Metric.__init__(self, name, serializer, **kwargs)
-    self.reconfig(name, serializer, interval, queue, **kwargs)
-
-  def reconfig(self, name, serializer, interval, queue, **kwargs):
-    Metric.reconfig(self, name, serializer, **kwargs)
-    self.queue = queue
-    self.interval = interval
-
   def values(self):
     try:
       res = {}

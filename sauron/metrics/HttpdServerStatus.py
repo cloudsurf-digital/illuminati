@@ -47,12 +47,11 @@ class HttpdServerStatus(Metric):
     'IdleWorkers'      : 'Count',
     'FreeClients'      : 'Count'
   }
-  def reconfig(self, url, **kwargs):
-    Metric.reconfig(self, **kwargs)
-    self.url = url
-    if not isinstance(metrics, list):
+  def reconfig(self, *args, **kwargs):
+    Metric.reconfig(self, *args, **kwargs)
+    if not isinstance(self.metrics, list):
       raise MetricException('metrics should be a list')
-    self.serverstatus_metrics = metrics
+    self.serverstatus_metrics = self.metrics
     for metric in self.serverstatus_metrics:
       try:
         assert HttpdServerStatus.AVAILABLE_METRICS_DATA.has_key(metric)

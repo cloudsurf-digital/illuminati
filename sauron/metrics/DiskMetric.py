@@ -33,9 +33,6 @@ class DiskMetric(Metric):
   Attributes:
     path (string): This should be a mounted filesystempath
   '''
-  def reconfig(self, path, **kwargs):
-    Metric.reconfig(self, **kwargs)
-    self.path = path
 
   def values(self):
     try:
