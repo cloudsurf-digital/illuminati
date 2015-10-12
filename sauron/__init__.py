@@ -53,16 +53,18 @@ logger.addHandler(handler)
 
 class Watcher(object):
     def __init__(self, dryrun=False):
-        self.metrics   = {}
-        self.emitters  = {}
-        self.interval  = None
-        self.loghandler= None
-        self.dryrun    = dryrun
-        self.loopingCall = None
-        self.files = {'/etc/sauron.yaml':None, 'sauron.yaml':None}
-        self.serializer_file = serializer_file
-        self.serializer = shelve.open(self.serializer_file, writeback=True)
-        self.readconfig()
+      self.metrics     = {}
+      self.emitters    = {}
+      self.interval    = None
+      self.listener    = None
+      self.ext_q       = None
+      self.loghandler  = None
+      self.dryrun      = dryrun
+      self.loopingCall = None
+      self.files = {'/etc/sauron.yaml':None, 'sauron.yaml':None}
+      self.serializer_file = serializer_file
+      self.serializer = shelve.open(self.serializer_file, writeback=True)
+      self.readconfig()
     
     def readconfig(self):
         config = {}
@@ -136,9 +138,14 @@ class Watcher(object):
             sys.exit(1)
         if self.externalmetric_listner:
           ext_m = 'ExternalMetricQueueConsumer'
-          self.ext_q = Queue(maxsize=120000)
-          emqc = ExternalMetricQueueConsumer('rpc', self.get_serialized_data_for(ext_m), self.interval, self.ext_q)
-          self.metrics['rpc'] = emqc
+          if not self.ext_q and not self.listener:
+            self.ext_q = Queue(maxsize=120000)
+            emqc = ExternalMetricQueueConsumer('rpc', self.get_serialized_data_for(ext_m), self.interval, self.ext_q)
+            self.metrics['rpc'] = emqc
+            elf = ExternalListenerFactory(self.ext_q)
+            self.socket_remove()
+            self.listener = reactor.listenUNIX(socketfile, elf)
+
       except KeyError:
         logger.error('No metrics in config file!')
         sys.exit(1)
@@ -203,6 +210,11 @@ class Watcher(object):
         self.serializer[key] = dict()
       return self.serializer[key]
 
+    def socket_remove(self):
+      try:
+        os.unlink(socketfile)
+      except OSError:
+        pass
 
     def start(self):
       if self.loopingCall:
@@ -212,9 +224,6 @@ class Watcher(object):
           logger.info('Start watcher sampling!')
           self.loopingCall = LoopingCall(self.sample)
           self.loopingCall.start(self.interval)
-          if self.externalmetric_listner:
-            elf = ExternalListenerFactory(self.ext_q)
-            reactor.listenUNIX(socketfile, elf)
           reactor.addSystemEventTrigger('before', 'shutdown', self.stop)
           reactor.run()
         except:
@@ -225,6 +234,10 @@ class Watcher(object):
       try:
         self.serializer.close()
         self.loopingCall.stop()
+        if self.listener:
+          self.listener.stopListening()
+          self.socket_remove()
+          self.listener = None
         self.loopingCall = None
       except:
         logger.exception('Error stopping')
