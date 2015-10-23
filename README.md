@@ -1,7 +1,7 @@
-Sauron
+Illuminati (aka Sauron)
 ======
 
-Sauron is meant to act as an all-seeing eye for pushing data to monitoring. It
+Illuminati is meant to act as an all-seeing eye for pushing data to monitoring. It
 works based on extendable "metrics", which are just python classes that report
 back values. For example, it comes with metrics to monitor disk space, mysql
 health, pinging servers, etc. These metrics are then pushed to "emitters" which
