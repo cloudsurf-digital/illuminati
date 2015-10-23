@@ -67,7 +67,7 @@ class Watcher(object):
       self.readconfig()
     
     def readconfig(self):
-        data = {}
+        config = {}
         for fname, updated in self.files.items():
             try:
                 # Get the last time this file was updated, if ever
@@ -75,10 +75,10 @@ class Watcher(object):
                 if not updated or (mtime > self.files[fname]):
                     with open(fname) as f:
                         f = file(fname)
-                        if data:
+                        if config:
                             print 'Warning: %s overriding prior settings' % fname
                             logger.warn('%s overriding prior settings' % fname)
-                        data = yaml.safe_load(f)
+                        config = yaml.safe_load(f)
                         f.close()
                         self.files[fname] = mtime
             except IOError:
@@ -87,16 +87,16 @@ class Watcher(object):
                 pass
             except Exception:
                 logger.exception('Reconfig failure.')
-        if data:
+        if config:
             logger.info('Reading configuration')
-            self.reconfig(data)
+            self.reconfig(config)
         
-    def reconfig(self, data):
-      self.interval = int(data.get('interval', 60))
-      self.externalmetric_listner = data.get('metriclistener', False)
+    def reconfig(self, config):
+      self.interval = int(config.get('interval', 60))
+      self.externalmetric_listner = config.get('metriclistener', False)
       if self.loghandler:
         logger.removeHandler(self.loghandler)
-      fname = data.get('logfile', '/var/log/sauron.log')
+      fname = config.get('logfile', '/var/log/sauron.log')
       # Set up the logging file
       self.loghandler = logging.FileHandler(fname, mode='a')
       self.loghandler.setFormatter(formatter)
@@ -105,10 +105,10 @@ class Watcher(object):
         
       # Read in /all/ the metrics!
       try:
-        if len(data['metrics']) == 0 and not self.externalmetric_listner:
+        if len(config['metrics']) == 0 and not self.externalmetric_listner:
           logger.error('No metrics in config file!')
-          exit(1)
-        for key,value in data['metrics'].items():
+          sys.exit(1)
+        for key,value in config['metrics'].items():
           try:
             try:
               d = dict(value.items())
@@ -126,16 +126,16 @@ class Watcher(object):
               self.metrics[key] = c(**d)
           except KeyError:
             logger.exception('No module listed for metric %s' % key)
-            exit(1)
+            sys.exit(1)
           except ImportError:
             logger.exception('Unable to import module %s' % module)
-            exit(1)
+            sys.exit(1)
           except TypeError as e:
             logger.exception('Unable to initialize metric %s' % key)
-            exit(1)
+            sys.exit(1)
           except MetricException as e:
             logger.exception('Module Exception %s' % module)
-            exit(1)
+            sys.exit(1)
         if self.externalmetric_listner:
           ext_m = 'ExternalMetricQueueConsumer'
           if not self.ext_q and not self.listener:
@@ -148,7 +148,7 @@ class Watcher(object):
 
       except KeyError:
         logger.error('No metrics in config file!')
-        exit(1)
+        sys.exit(1)
         
       # Read in /all/ the emitters!
       try:
@@ -156,10 +156,10 @@ class Watcher(object):
           logger.warn('Skipping all emitters because of --dry-run')
           self.emitters[''] = Emitter()
           return
-        if len(data['emitters']) == 0:
+        if len(config['emitters']) == 0:
           logger.error('No emitters in config file!')
-          exit(1)
-        for key,value in data['emitters'].items():
+          sys.exit(1)
+        for key,value in config['emitters'].items():
           try:
             m = __import__('sauron.emitters.%s' % key)
             m = getattr(m, 'emitters')
@@ -169,16 +169,16 @@ class Watcher(object):
             self.emitters[key] = c(**d)
           except ImportError:
             logger.exception('Unable to import module %s' % key)
-            exit(1)
+            sys.exit(1)
           except TypeError as e:
             logger.exception('Unable to initialize emitter %s' % key)
-            exit(1)
+            sys.exit(1)
           except EmitterException as e:
             logger.exception('Error with module %s' % module)
-            exit(1)
+            sys.exit(1)
       except:
         logger.exception('Emitter error!')
-        exit(1)
+        sys.exit(1)
     
     def sample(self):
         # Try to re-read the configuration files

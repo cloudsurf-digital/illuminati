@@ -27,15 +27,6 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class ShellMetric(Metric):
-    def __init__(self, name, serializer, cmd, units, **kwargs):
-        Metric.__init__(self, name, serializer, **kwargs)
-        self.reconfig(name, cmd, serializer, units)
-    
-    def reconfig(self, name, serializer, cmd, units, **kwargs):
-        Metric.reconfig(self, name, serializer, **kwargs)
-        self.cmd   = cmd
-        self.units = units
-    
     def values(self):
         try:
             res = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE).stdout.read().strip()

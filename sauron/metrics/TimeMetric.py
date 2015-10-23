@@ -26,34 +26,30 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class TimeMetric(Metric):
-    """
-    return 1 during the given timeframe. This can be used for self implementing
-    scheduled autoscaling
-    """
-    def __init__(self, name, serializer, start, stop, **kwargs):
-        Metric.__init__(self, name, serializer, **kwargs)
-        self.reconfig(name, serializer, start, stop, **kwargs)
+  """
+  return 1 during the given timeframe. This can be used for self implementing
+  scheduled autoscaling
 
-    def reconfig(self, name, serializer, start, stop, **kwargs):
-        Metric.reconfig(self, name, serializer, **kwargs)
-        self.start = start
-        self.stop  = stop
+  Attributes:
+     start (string): the start point for sending 1. Format is  <HH>:<MM>
+     stop (string): the stop point for sending 1. Format is  <HH>:<MM>
 
-    def values(self):
+  """
+  def values(self):
+    val = 0
+    try:
+      now = datetime.now().time()
+      start_dt = datetime.strptime(self.start, "%H:%M").time()
+      stop_dt  = datetime.strptime(self.stop, "%H:%M").time()
+      if now >= start_dt and now <= stop_dt:
+        val = 1
+      else:
         val = 0
-        try:
-            now = datetime.now().time()
-            start_dt = datetime.strptime(self.start, "%H:%M").time()
-            stop_dt  = datetime.strptime(self.stop, "%H:%M").time()
-            if now >= start_dt and now <= stop_dt:
-               val = 1
-            else:
-               val = 0
-            return {'results' : { self.name : (val, 'Count') } }
-        except:
-            raise MetricException('failed to parse time')
+      return {'results' : { self.name : (val, 'Count') } }
+    except:
+      raise MetricException('failed to parse time')
 
 if __name__ == '__main__':
-    m = TimeMetric('testing', '12:10', '20:05')
-    print repr(m.values())
+  m = TimeMetric('testing', '12:10', '20:05')
+  print repr(m.values())
 

@@ -27,15 +27,9 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class LogMetric(Metric):
-    def __init__(self, name, path, **kwargs):
-        Metric.__init__(self, name, **kwargs)
-        self.reconfig(name, path, **kwargs)
-    
-    def reconfig(self, name, path, **kwargs):
-        Metric.reconfig(self, name, **kwargs)
-        self.name = name
-        self.patterns = dict([(k, re.compile(v)) for k,v in kwargs.items()])
+    def reconfig(self, path, **kwargs):
         self.path = path
+        self.patterns = dict([(k, re.compile(v)) for k,v in kwargs.items()])
         try:
             self.f = file(self.path)    # The file object we'll read from
         except IOError as e:

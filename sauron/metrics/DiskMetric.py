@@ -27,32 +27,29 @@ from sauron import logger
 from sauron.metrics import Metric, MetricException
 
 class DiskMetric(Metric):
-    def __init__(self, name, serializer, path, **kwargs):
-        Metric.__init__(self, name, serializer, **kwargs)
-        self.reconfig(name, serializer,  path, **kwargs)
+  '''
+  Calculate as described in http://stackoverflow.com/questions/787776/find-free-disk-space-in-python-on-os-x
 
-    def reconfig(self, name, serializer, path, **kwargs):
-        Metric.reconfig(self, name, serializer, **kwargs)
-        self.path = path
+  Attributes:
+    path (string): This should be a mounted filesystempath
+  '''
 
-    def values(self):
-        # Reference:
-        # http://stackoverflow.com/questions/787776/find-free-disk-space-in-python-on-os-x
-        try:
-            st = os.statvfs(self.path)
-            divisor = 1024.0 ** 3
-            free  = (st.f_bavail * st.f_frsize) / divisor
-            total = (st.f_blocks * st.f_frsize) / divisor
-            used  = (st.f_blocks - st.f_bavail) * st.f_frsize / divisor
-            results = {
-                    'free'       : (round(free , 3), 'Gigabytes'),
-                    'total'      : (round(total, 3), 'Gigabytes'),
-                    'used'       : (round(used , 3), 'Gigabytes'),
-                    'percent'    : (round(float(used) / float(total), 3) * 100, 'Percent'),
-                    'inodes'     : (st.f_files, 'Count'),
-                    'ifree'      : (st.f_ffree, 'Count'),
-                    'iused_perc' : (round(float(st.f_files - st.f_ffree) / float(st.f_files), 3) * 100, 'Percent'),
-            }
-            return {'results': results}
-        except Exception as e:
-            raise MetricException(e)
+  def values(self):
+    try:
+      st = os.statvfs(self.path)
+      divisor = 1024.0 ** 3
+      free  = (st.f_bavail * st.f_frsize) / divisor
+      total = (st.f_blocks * st.f_frsize) / divisor
+      used  = (st.f_blocks - st.f_bavail) * st.f_frsize / divisor
+      results = {
+        'free'       : (round(free , 3), 'Gigabytes'),
+        'total'      : (round(total, 3), 'Gigabytes'),
+        'used'       : (round(used , 3), 'Gigabytes'),
+        'percent'    : (round(float(used) / float(total), 3) * 100, 'Percent'),
+        'inodes'     : (st.f_files, 'Count'),
+        'ifree'      : (st.f_ffree, 'Count'),
+        'iused_perc' : (round(float(st.f_files - st.f_ffree) / float(st.f_files), 3) * 100, 'Percent'),
+      }
+      return {'results': results}
+    except Exception as e:
+      raise MetricException(e)
