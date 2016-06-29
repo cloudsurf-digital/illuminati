@@ -14,7 +14,7 @@ setup(
   url              = "http://github.com/johnny-die-tulpe/sauron/",
   keywords         = ["monitoring", "cloudwatch"],
   scripts          = ['files/sauron-daemon'],
-  data_files       = [('/etc/init.d', ['files/sauron.init.el6']),
+  data_files       = [('/etc/init.d', ['files/sauron']),
                       ('/etc', ['sauron.yaml'])],
   classifiers      = [
     "Programming Language :: Python",

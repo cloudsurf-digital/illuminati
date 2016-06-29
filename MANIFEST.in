@@ -1,2 +1,2 @@
-include files/sauron.init.el6
+include files/sauron
 include sauron.yaml
