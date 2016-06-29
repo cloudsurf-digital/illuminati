@@ -5,7 +5,7 @@ from setuptools import setup
 setup(
   name             = "sauron",
   packages         = ["sauron", "sauron.metrics", "sauron.emitters", "sauron.utils"],
-  version          = "0.2.2",
+  version          = "0.2.4",
   description      = "An eye for monitoring, and pushing monitoring data",
   author           = "Dan Lecocq",
   author_email     = "dan@seomoz.org",
@@ -27,7 +27,6 @@ setup(
     "pymysql >= 0.4",
     "boto >= 2.0",
     "tweepy >= 1.7.1",
-    "httplib2 >= 0.7.1",
     "argparse >= 1.2.1",
     "twisted",
     "redis",
