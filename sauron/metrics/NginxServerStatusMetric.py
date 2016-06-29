@@ -23,7 +23,7 @@
 
 import re
 import os
-import httplib2
+import urllib2
 from sauron import logger
 from sauron.metrics import Metric, MetricException
 
@@ -49,10 +49,6 @@ class NginxServerStatusMetric(Metric):
         assert NginxServerStatusMetric.AVAILABLE_METRICS_DATA.has_key(metric)
       except AssertionError:
         raise MetricException('Metric is not available, choose out of %s' % (", ".join(NginxServerStatusMetric.AVAILABLE_METRICS_DATA.keys())))
-    try:
-      server_status = httplib2.Http() 
-    except Exception as e:
-      raise MetricException(e)
 
   def calculate_req_per_second(self, total_access):
     # only send results if req greater than 30 
@@ -65,10 +61,12 @@ class NginxServerStatusMetric(Metric):
     return result
 
   def get_server_status(self, url):
-    http = httplib2.Http() 
-    resp, content = http.request(self.url, 'GET')
+    server_status = urllib2.urlopen(self.url)
+    response = server_status.getcode()
+    content = server_status.read()
     res = {}
-    assert resp.status == 200 
+    if response != 200:
+      raise MetricException('httpd serverstatus is down')
     res['ActiveCon'] = int(content.splitlines()[0].split(': ')[1].strip())
     res['TotalAcceptedConn'], res['TotalHandledConn'], res['TotalHandledReq'] = [ int(i) for i in \
         content.splitlines()[2].split(' ') if re.match(r'\d+', i.strip()) ]

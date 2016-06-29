@@ -23,7 +23,7 @@
 
 import re
 import os
-import httplib2
+import urllib2
 from sauron import logger
 from sauron.metrics import Metric, MetricException
 
@@ -57,11 +57,6 @@ class HttpdServerStatus(Metric):
         assert HttpdServerStatus.AVAILABLE_METRICS_DATA.has_key(metric)
       except AssertionError:
         raise MetricException('Metric is not available, choose out of %s' % (", ".join(HttpdServerStatus.AVAILABLE_METRICS_DATA.keys())))
-    try:
-      server_status = httplib2.Http() 
-    except Exception as e:
-      raise MetricException(e)
-
 
   def count_freeclients(self, value):
      return str(value.count('.'))
@@ -104,8 +99,11 @@ class HttpdServerStatus(Metric):
 
   def values(self):
     try:
-      server_status = httplib2.Http() 
-      response, content = server_status.request(self.url, 'GET')
+      server_status = urllib2.urlopen(self.url)
+      response = server_status.getcode()
+      if response != 200:
+        raise MetricException('httpd serverstatus is down')
+      content = server_status.read()
       result = {}
       self.serverstatus_result = dict([line.split(': ') for line in content.splitlines() if ': ' in line])
       for k,v in self.serverstatus_result.iteritems():
