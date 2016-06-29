@@ -131,7 +131,6 @@ Others are in the works, including support for:
 
 * Sending to HTTP endpoints in JSON or XML
 * Making stats and graphs available through a campfire bot
-* Making stats and graphs available through Jabber
 
 Metrics
 =======
