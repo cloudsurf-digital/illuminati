@@ -13,8 +13,8 @@ setup(
   maintainer_email = "lasse.borchard@prosiebensat1digital.de",
   url              = "http://github.com/johnny-die-tulpe/sauron/",
   keywords         = ["monitoring", "cloudwatch"],
-  scripts          = ['bin/sauron-daemon'],
-  data_files       = [('/etc/init.d', ['bin/sauron']),
+  scripts          = ['files/sauron-daemon'],
+  data_files       = [('/etc/init.d', ['files/sauron.init.el6']),
                       ('/etc', ['sauron.yaml'])],
   classifiers      = [
     "Programming Language :: Python",
