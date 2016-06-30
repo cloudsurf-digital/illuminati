@@ -13,13 +13,13 @@ Installation
 
 Install with pip or easy\_install, or install from git:
 
-	sudo pip install sauron
+	sudo pip install illuminati
 	# Or, installing from git
-	git clone git@github.com:seomoz/sauron.git
+	git clone git@github.com:johnny-die-tulpe/illuminati.git
 	cd sauron && sudo python setup.py install
-        # or build rpm on CentOs, AmazonLinux, Redhat
+	# or build rpm on CentOs, AmazonLinux, Redhat
 	sudo yum group install "Development tools"
-	git clone https://github.com/johnny-die-tulpe/sauron.git
+	git clone https://github.com/johnny-die-tulpe/illuminati.git
 	cd sauron && python setup.py bdist_rpm; cd -
 	sudo yum localinstall sauron/dist/sauron-*.noarch.rpm
 

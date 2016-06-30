@@ -1,2 +1,2 @@
-include bin/sauron
+include files/sauron
 include sauron.yaml
