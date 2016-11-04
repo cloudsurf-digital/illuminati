@@ -45,6 +45,7 @@ class InfluxDbPush(Emitter):
     for name, results in metrics.items():
       for key,value in results['results'].items():
         v, u = value
+        self.tags['unit'] = u
         datapoint = { "measurement": "%s-%s" % (name, key),
                       "tags": self.tags,
                       "time": int(datetime.datetime.now().strftime('%s')),
