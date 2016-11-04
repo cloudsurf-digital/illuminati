@@ -28,7 +28,7 @@ from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
 
 class InfluxDbPush(Emitter):
-  def __init__(self, host, port, user, password, dbname='illuminati', tags={}):
+  def __init__(self, host, port=8086, user='root', password='root', dbname='illuminati', tags={}):
     Emitter.__init__(self)
     self.client = InfluxDBClient(host, port, user, password, dbname)
     try:
