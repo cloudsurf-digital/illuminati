@@ -30,13 +30,15 @@ from influxdb.exceptions import InfluxDBClientError
 class InfluxDbPush(Emitter):
   def __init__(self, host, port, user, password, dbname='illuminati', **kwargs):
     Emitter.__init__(self)
-    self.myname = socket.getfqdn()
     self.client = InfluxDBClient(host, port, user, password, dbname)
     try:
       self.client.create_database(dbname)
-    except InfluxDBClientError:
-      pass
+    except InfluxDBClientError as e:
+      logger.error(str(e))
     self.client.switch_database(dbname)
+    self.tags = kwargs
+    self.tags['host'] = socket.getfqdn()
+
 
   def metrics(self, metrics):
     payload = []
@@ -44,7 +46,7 @@ class InfluxDbPush(Emitter):
       for key,value in results['results'].items():
         v, u = value
         datapoint = { "measurement": "%s-%s" % (name, key),
-                      "tags": { "host": self.myname, "unit": u },
+                      self.tags,
                       "time": int(datetime.datetime.now().strftime('%s')),
                       "fields": { "value": v }
         }
