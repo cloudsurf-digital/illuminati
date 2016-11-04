@@ -25,13 +25,17 @@ import datetime, socket
 from sauron import logger
 from sauron.emitters import Emitter, EmitterException
 from influxdb import InfluxDBClient
+from influxdb.exceptions import InfluxDBClientError
 
 class InfluxDbPush(Emitter):
   def __init__(self, host, port, user, password, dbname='illuminati', **kwargs):
     Emitter.__init__(self)
     self.myname = socket.getfqdn()
-    self.client = InfluxDBClient(host, port, usernaem, password, dbname)
-    self.client.create_database(dbname)
+    self.client = InfluxDBClient(host, port, user, password, dbname)
+    try:
+      self.client.create_database(dbname)
+    except InfluxDBClientError:
+      pass
     self.client.switch_database(dbname)
 
   def metrics(self, metrics):
