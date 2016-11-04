@@ -5,7 +5,7 @@ from setuptools import setup
 setup(
   name             = "sauron",
   packages         = ["sauron", "sauron.metrics", "sauron.emitters", "sauron.utils"],
-  version          = "0.2.2",
+  version          = "0.2.4",
   description      = "An eye for monitoring, and pushing monitoring data",
   author           = "Dan Lecocq",
   author_email     = "dan@seomoz.org",
@@ -13,8 +13,8 @@ setup(
   maintainer_email = "lasse.borchard@prosiebensat1digital.de",
   url              = "http://github.com/johnny-die-tulpe/sauron/",
   keywords         = ["monitoring", "cloudwatch"],
-  scripts          = ['bin/sauron-daemon'],
-  data_files       = [('/etc/init.d', ['bin/sauron']),
+  scripts          = ['files/sauron-daemon'],
+  data_files       = [('/etc/init.d', ['files/sauron']),
                       ('/etc', ['sauron.yaml'])],
   classifiers      = [
     "Programming Language :: Python",
@@ -27,7 +27,6 @@ setup(
     "pymysql >= 0.4",
     "boto >= 2.0",
     "tweepy >= 1.7.1",
-    "httplib2 >= 0.7.1",
     "argparse >= 1.2.1",
     "twisted",
     "redis",
