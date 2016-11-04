@@ -28,7 +28,7 @@ from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
 
 class InfluxDbPush(Emitter):
-  def __init__(self, host, port, user, password, dbname='illuminati', **kwargs):
+  def __init__(self, host, port, user, password, dbname='illuminati', tags={}):
     Emitter.__init__(self)
     self.client = InfluxDBClient(host, port, user, password, dbname)
     try:
@@ -36,7 +36,7 @@ class InfluxDbPush(Emitter):
     except InfluxDBClientError as e:
       logger.error(str(e))
     self.client.switch_database(dbname)
-    self.tags = kwargs
+    self.tags = tags
     self.tags['host'] = socket.getfqdn()
 
 
@@ -52,4 +52,4 @@ class InfluxDbPush(Emitter):
         }
         logger.info('To InfluxDB %s-%s => %s' % (name, key, repr(value)))
         payload.append(datapoint)
-    self.client.write_points(payload)
+    self.client.write_points(payload, time_precision='s')

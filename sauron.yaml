@@ -9,6 +9,9 @@ interval:   60
 #      user: illuminati
 #      password: s3cre3t
 #      dbname: illuminati
+#      tags:
+#        serverrole: webserver
+#        region    : eu
 #    # For example, we support CloudWatch
 #    CloudWatch:
 #        namespace: sauron
