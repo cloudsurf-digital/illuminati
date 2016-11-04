@@ -46,9 +46,9 @@ class InfluxDbPush(Emitter):
       for key,value in results['results'].items():
         v, u = value
         datapoint = { "measurement": "%s-%s" % (name, key),
-                      self.tags,
+                      "tags": self.tags,
                       "time": int(datetime.datetime.now().strftime('%s')),
-                      "fields": { "value": v }
+                      "fields": { "value": float(v)}
         }
         logger.info('To InfluxDB %s-%s => %s' % (name, key, repr(value)))
         payload.append(datapoint)
