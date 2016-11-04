@@ -2,6 +2,13 @@ interval:   60
 #logfile:    sauron.log
 # Emitters are where you want to publish the data
 #emitters:
+#    # Use InfluxDB
+#    InfluxDbPush:
+#      host: my-influxdb.example.com
+#      port: 8086
+#      user: illuminati
+#      password: s3cre3t
+#      dbname: illuminati
 #    # For example, we support CloudWatch
 #    CloudWatch:
 #        namespace: sauron

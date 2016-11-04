@@ -59,8 +59,7 @@ Emitter dependencies:
 * __boto__ Version 2.0+ is used for __CloudWatch__. That's the current release at
 time of writing, but if you have boto 1.9, you'll need to upgrade.
 * __tweepy__ is used for the __Twitter__ emitter.
-* __httplib2__ is used for the __HTTPEndpoint__ emitter, __NginxServerStatusMetric__ and
-__HttpdServerStatus metric__.
+* __influxdb__ is used for the __InFluxDb__ emitter
 
 Installing Dependencies
 -----------------------
@@ -68,12 +67,12 @@ Installing Dependencies
 Dependencies are automatically installed with sauron, but if for whatever reason you
 have trouble, you can install them manually
 
-	sudo easy_install boto
-	sudo easy_install pyyaml
-	sudo easy_install psutil
-	sudo easy_install tweepy
-	sudo easy_install httplib2
-	sudo easy_install mysql-python
+	sudo pip install boto
+	sudo pip install pyyaml
+	sudo pip install psutil
+	sudo pip install tweepy
+	sudo pip install influxdb
+	sudo pip install mysql-python
 
 Configuration
 =============
