@@ -1,6 +1,23 @@
 Emitters
 ========
 
+InfluxDb
+----------
+
+InfluxDb pushes the metric data into your configure host setting.
+You can also specifiy tags for your metric data, like hostgroup or role. The hostname and
+the unit of your metric is always part of your tags. Example config could look like
+
+    InfluxDbPush:
+      host: my-influxdb.example.com
+      port: 8086
+      user: illuminati
+      password: s3cre3t
+      dbname: illuminati
+      tags:
+        serverrole: webserver
+        region    : eu
+
 CloudWatch
 ----------
 

@@ -59,7 +59,7 @@ Emitter dependencies:
 * __boto__ Version 2.0+ is used for __CloudWatch__. That's the current release at
 time of writing, but if you have boto 1.9, you'll need to upgrade.
 * __tweepy__ is used for the __Twitter__ emitter.
-* __influxdb__ is used for the __InFluxDb__ emitter
+* __influxdb__ is used for the __InfluxDbPush__ emitter
 
 Installing Dependencies
 -----------------------
@@ -124,6 +124,7 @@ information, refer to the emitters' README.md. __Emitters are easily extensible_
 included emitters are:
 
 * CloudWatch (for reporting to Amazon's [CloudWatch](http://aws.amazon.com/cloudwatch/))
+* InfluxDbPush (pushing metricdata to Influxdb's HTTP Api [InfluxDb](https://docs.influxdata.com/))
 * Twitter (tweets each of the gathered metrics)
 
 Others are in the works, including support for:
