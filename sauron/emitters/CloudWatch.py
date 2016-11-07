@@ -132,6 +132,6 @@ class CloudWatch(Emitter):
     def metrics(self, metrics):
         for name, results in metrics.items():
             for key,value in results['results'].items():
-                logger.info('Pushing %s-%s => %s' % (name, key, repr(value)))
+                logger.info('Cloudwatch %s-%s => %s' % (name, key, repr(value)))
                 v, u = value
                 self.conn.put_metric_data(self.namespace, name + '-' + key, unit=u, value=v, dimensions=self.dims)

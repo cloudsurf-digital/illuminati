@@ -49,6 +49,8 @@ class HttpdServerStatus(Metric):
   }
   def reconfig(self, *args, **kwargs):
     Metric.reconfig(self, *args, **kwargs)
+    if not self.__dict__.has_key('url'):
+      self.url = 'http://127.0.0.1/server-status?auto'
     if not isinstance(self.metrics, list):
       raise MetricException('metrics should be a list')
     self.serverstatus_metrics = self.metrics
